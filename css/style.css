@@ -1,0 +1,3707 @@
+/* ======================================================
+   VARIABLES
+====================================================== */
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#111;
+  --border:#ddd;
+
+  --red:#c40000;
+  --yellow:#ffcc00;
+  --green:#28a745;
+}
+
+body.dark{
+  --bg:#0f0f0f;
+  --card:#1a1a1a;
+  --text:#f5f5f5;
+  --border:#2e2e2e;
+}
+
+/* ======================================================
+   GLOBAL
+====================================================== */
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+
+body{
+  background:linear-gradient(180deg,#f7f7f7,#ededed);
+  color:var(--text);
+}
+body.dark{
+  background:linear-gradient(180deg,#0c0c0c,#151515);
+}
+
+/* ===============================
+   HEADER (WHITE POS STYLE)
+=============================== */
+header{
+  height:64px;
+  background:#ffffff;
+  color:#111;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 20px;
+  box-shadow:0 2px 12px rgba(0,0,0,.12);
+  position:relative;
+}
+
+header b{
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:#111;
+}
+
+#hamburger{
+  font-size:32px;
+  cursor:pointer;
+  color:#111;
+}
+
+
+/* DROPDOWN */
+#dropdown{
+  position:absolute;
+  top:64px;
+  right:14px;
+  width:220px;
+  background:var(--card);
+  border-radius:18px;
+  box-shadow:0 14px 36px rgba(0,0,0,.4);
+  display:none;
+  overflow:hidden;
+  z-index:999;
+}
+
+#dropdown button{
+  width:100%;
+  padding:16px;
+  border:none;
+  background:none;
+  text-align:left;
+  font-weight:700;
+  cursor:pointer;
+}
+#dropdown button:hover{
+  background:#f0f0f0;
+}
+body.dark #dropdown button:hover{
+  background:#2a2a2a;
+}
+
+/* ======================================================
+   MAIN LAYOUT
+====================================================== */
+main{
+  padding:20px;
+  display:grid;
+  grid-template-columns:3.2fr 1.4fr;
+  gap:20px;
+}
+
+/* ======================================================
+   MENU (BIG POS STYLE)
+====================================================== */
+.menu-container{
+  background:var(--card);
+  border-radius:26px;
+  padding:20px;
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+}
+
+#menu{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:22px;
+}
+
+.menu-card{
+  position:relative;
+  background:linear-gradient(180deg,#fff,#f8f8f8);
+  border-radius:26px;
+  padding:18px;
+  box-shadow:0 16px 36px rgba(0,0,0,.25);
+  display:flex;
+  flex-direction:column;
+  transition:.15s ease;
+}
+.menu-card:active{
+  transform:scale(.97);
+}
+
+/* IMAGE */
+.menu-card img{
+  width:100%;
+  height:190px;
+  object-fit:cover;
+  border-radius:20px;
+  margin-bottom:12px;
+}
+
+/* NAME */
+.menu-name{
+  text-align:center;
+  font-weight:900;
+  font-size:18px;
+  margin-bottom:12px;
+}
+
+/* STOCK BADGE */
+.stock-badge{
+  position:absolute;
+  top:14px;
+  right:14px;
+  padding:8px 14px;
+  font-size:14px;
+  font-weight:900;
+  border-radius:999px;
+  background:var(--green);
+  color:#fff;
+}
+.stock-badge.low{
+  background:#ffc107;
+  color:#111;
+}
+.stock-badge.out{
+  background:#dc3545;
+}
+
+/* PRICE BUTTON */
+.price-btn{
+  margin-top:auto;
+  background:linear-gradient(135deg,#ff9800,#ffcc00);
+  color:#111;
+  border:none;
+  padding:18px;
+  font-size:24px;
+  font-weight:900;
+  border-radius:22px;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(0,0,0,.3);
+}
+.price-btn:disabled{
+  background:#aaa;
+  color:#fff;
+  cursor:not-allowed;
+}
+.price-btn:active{
+  transform:scale(.96);
+}
+
+/* ======================================================
+   CART
+====================================================== */
+#cart{
+  background:linear-gradient(180deg,#ffffff,#f5f5f5);
+  border-radius:26px;
+  padding:18px;
+  box-shadow:0 18px 36px rgba(0,0,0,.25);
+  display:flex;
+  flex-direction:column;
+}
+
+#cart h3{
+  text-align:center;
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:12px;
+}
+
+.cart-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 0;
+  font-weight:700;
+}
+
+/* QTY */
+.qty-btn{
+  background:#e0e0e0;
+  border:none;
+  padding:8px 16px;
+  font-size:20px;
+  font-weight:900;
+  border-radius:12px;
+  cursor:pointer;
+}
+.qty-btn:active{
+  transform:scale(.9);
+}
+
+/* TOTAL */
+.total-box{
+  margin-top:12px;
+  background:#ffeaea;
+  color:#c40000;
+  font-size:28px;
+  font-weight:900;
+  padding:18px;
+  border-radius:22px;
+  text-align:right;
+}
+
+/* ======================================================
+   NUMPAD
+====================================================== */
+.numpad{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.numpad button{
+  padding:22px;
+  font-size:24px;
+  font-weight:900;
+  border:none;
+  border-radius:18px;
+  background:#2a2a2a;
+  color:#fff;
+  cursor:pointer;
+}
+.numpad button:active{
+  transform:scale(.95);
+}
+body.dark .numpad button{
+  background:#444;
+}
+
+/* ======================================================
+   CHECKOUT
+====================================================== */
+.checkout-btn{
+  margin-top:18px;
+  background:linear-gradient(135deg,#28a745,#5be37d);
+  color:#fff;
+  border:none;
+  padding:22px;
+  font-size:26px;
+  font-weight:900;
+  border-radius:26px;
+  box-shadow:0 12px 28px rgba(0,0,0,.4);
+  cursor:pointer;
+}
+.checkout-btn:active{
+  transform:scale(.96);
+}
+
+/* ======================================================
+   SALES
+====================================================== */
+.sales-container{
+  margin:20px;
+  background:var(--card);
+  border-radius:26px;
+  padding:20px;
+  box-shadow:0 18px 36px rgba(0,0,0,.25);
+}
+
+.sales-summary{
+  display:flex;
+  gap:18px;
+  margin-bottom:18px;
+}
+
+.summary-card{
+  flex:1;
+  background:linear-gradient(135deg,#28a745,#7dff9f);
+  color:#fff;
+  border-radius:22px;
+  padding:18px;
+}
+.summary-card .label{
+  font-size:14px;
+}
+.summary-card .value{
+  font-size:26px;
+  font-weight:900;
+}
+
+/* SALES ENTRY */
+.sales-entry{
+  border-bottom:1px solid var(--border);
+  padding:12px 0;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.sales-items{
+  color:#666;
+  font-size:14px;
+}
+
+.void-btn{
+  background:#dc3545;
+  color:#fff;
+  border:none;
+  padding:6px 12px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* ===============================
+   EDIT PRODUCT MODAL OVERLAY
+=============================== */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(6px);
+  z-index:2000;
+  align-items:center;
+  justify-content:center;
+}
+
+
+.modal-box{
+  background:linear-gradient(180deg,#ffffff,#f6f6f6);
+  width:92vw;
+  max-width:1000px;
+  height:88vh;
+  border-radius:28px;
+  padding:22px;
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  gap:20px;
+  box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
+
+body.dark .modal-box{
+  background:linear-gradient(180deg,#1c1c1c,#111);
+}
+
+
+.product-list{
+  overflow:auto;
+  padding-right:10px;
+  border-right:2px solid var(--border);
+}
+
+/* SCROLLBAR */
+.product-list::-webkit-scrollbar{
+  width:8px;
+}
+.product-list::-webkit-scrollbar-thumb{
+  background:#bbb;
+  border-radius:999px;
+}
+
+
+.product-item{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:16px;
+  background:linear-gradient(180deg,#fff,#f4f4f4);
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+  transition:.15s ease;
+}
+
+.product-item:hover{
+  transform:scale(1.02);
+}
+
+body.dark .product-item{
+  background:linear-gradient(180deg,#222,#151515);
+}
+
+
+.product-item img{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:14px;
+  box-shadow:0 6px 14px rgba(0,0,0,.35);
+}
+.product-item button{
+  background:linear-gradient(135deg,#dc3545,#ff6b6b);
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  font-size:14px;
+  font-weight:900;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.product-item button:active{
+  transform:scale(.92);
+}
+
+.form{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.form h2{
+  font-size:24px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.form input{
+  padding:14px;
+  font-size:16px;
+  border-radius:14px;
+  border:2px solid var(--border);
+  outline:none;
+  transition:.15s ease;
+}
+
+.form input:focus{
+  border-color:#28a745;
+  box-shadow:0 0 0 3px rgba(40,167,69,.25);
+}
+
+body.dark .form input{
+  background:#1c1c1c;
+  color:#fff;
+}
+
+
+.actions{
+  margin-top:auto;
+  display:flex;
+  gap:14px;
+}
+
+.save-btn{
+  flex:1;
+  background:linear-gradient(135deg,#28a745,#6bff9a);
+  color:#fff;
+  border:none;
+  padding:16px;
+  font-size:18px;
+  font-weight:900;
+  border-radius:18px;
+  cursor:pointer;
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+}
+
+.close-btn{
+  flex:1;
+  background:linear-gradient(135deg,#dc3545,#ff7b7b);
+  color:#fff;
+  border:none;
+  padding:16px;
+  font-size:18px;
+  font-weight:900;
+  border-radius:18px;
+  cursor:pointer;
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+}
+
+.save-btn:active,
+.close-btn:active{
+  transform:scale(.96);
+}
+
+
+/* ======================================================
+   RESPONSIVE POS
+====================================================== */
+
+/* LARGE SCREEN / TV POS */
+@media (min-width:1400px){
+  #menu{
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  }
+  .menu-card img{
+    height:220px;
+  }
+}
+
+/* TABLET POS */
+@media (max-width:1024px){
+  main{
+    grid-template-columns:1fr;
+  }
+  #menu{
+    grid-template-columns:repeat(3,1fr);
+  }
+  #cart{
+    position:sticky;
+    bottom:0;
+    z-index:100;
+  }
+}
+
+/* MOBILE POS */
+@media (max-width:600px){
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+  .menu-card img{
+    height:150px;
+  }
+  .price-btn{
+    font-size:20px;
+    padding:14px;
+  }
+  .checkout-btn{
+    font-size:22px;
+    padding:18px;
+  }
+}
+/* ======================================================
+   FULL DARK MODE OVERRIDES (READY TO USE)
+   COPY PASTE SA PINAKA BABA NG CSS
+====================================================== */
+
+/* ===== GLOBAL ===== */
+body.dark{
+  background:linear-gradient(180deg,#0c0c0c,#151515);
+  color:#f5f5f5;
+}
+
+/* ===== HEADER ===== */
+body.dark header{
+  background:#141414;
+  color:#f5f5f5;
+  box-shadow:0 2px 12px rgba(0,0,0,.6);
+}
+body.dark header b,
+body.dark #hamburger{
+  color:#f5f5f5;
+}
+
+/* ===== DROPDOWN ===== */
+body.dark #dropdown{
+  background:#1c1c1c;
+}
+body.dark #dropdown button{
+  color:#f5f5f5;
+}
+body.dark #dropdown button:hover{
+  background:#2a2a2a;
+}
+
+/* ===== MENU CONTAINER ===== */
+body.dark .menu-container{
+  background:#1a1a1a;
+  box-shadow:0 18px 40px rgba(0,0,0,.6);
+}
+
+/* ===== MENU CARD ===== */
+body.dark .menu-card{
+  background:linear-gradient(180deg,#1e1e1e,#141414);
+}
+body.dark .menu-name{
+  color:#f5f5f5;
+}
+
+/* ===== PRICE BUTTON ===== */
+body.dark .price-btn{
+  background:linear-gradient(135deg,#ff9800,#ffb300);
+  color:#111;
+}
+body.dark .price-btn:disabled{
+  background:#555;
+  color:#aaa;
+}
+
+/* ===== CART ===== */
+body.dark #cart{
+  background:linear-gradient(180deg,#1a1a1a,#111);
+}
+
+/* ===== CART ITEMS ===== */
+body.dark .cart-item{
+  border-bottom:1px solid #2a2a2a;
+}
+
+/* ===== QTY BUTTON ===== */
+body.dark .qty-btn{
+  background:#333;
+  color:#fff;
+}
+
+/* ===== TOTAL BOX ===== */
+body.dark .total-box{
+  background:#2a1414;
+  color:#ff6b6b;
+}
+
+/* ===== NUMPAD ===== */
+body.dark .numpad button{
+  background:#333;
+  color:#fff;
+}
+
+/* ===== CHECKOUT BUTTON ===== */
+body.dark .checkout-btn{
+  background:linear-gradient(135deg,#28a745,#43d36d);
+  color:#fff;
+}
+
+/* ===== SALES CONTAINER ===== */
+body.dark .sales-container{
+  background:#1a1a1a;
+}
+
+/* ===== SALES ENTRY ===== */
+body.dark .sales-entry{
+  border-bottom:1px solid #2e2e2e;
+}
+body.dark .sales-items{
+  color:#aaa;
+}
+
+/* ===== SUMMARY CARDS ===== */
+body.dark .summary-card{
+  background:linear-gradient(135deg,#1f7a3a,#3cbf6e);
+}
+
+/* ===== DATE INPUT ===== */
+body.dark input[type="date"]{
+  background:#1c1c1c;
+  color:#fff;
+  border:1px solid #2e2e2e;
+}
+
+/* ===== MODAL ===== */
+body.dark .modal-box{
+  background:linear-gradient(180deg,#1c1c1c,#111);
+}
+body.dark .product-item{
+  background:linear-gradient(180deg,#222,#151515);
+}
+
+/* ===== FORM INPUTS ===== */
+body.dark .form input{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+
+/* ===== SCROLLBAR ===== */
+body.dark ::-webkit-scrollbar-thumb{
+  background:#444;
+}
+
+/* ===== VOID BUTTON ===== */
+body.dark .void-btn{
+  background:#b02a37;
+}
+
+/* ===== STOCK BADGES ===== */
+body.dark .stock-badge{
+  filter:brightness(.95);
+}
+/* ===============================
+   SYSTEM MODAL FIX (SMALL + CENTERED)
+=============================== */
+#systemModal .modal-box{
+  width:90%;
+  max-width:420px;
+  height:auto;
+  min-height:unset;
+  display:block;
+  padding:26px;
+}
+
+#systemModal h2{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:10px;
+  text-align:center;
+}
+
+#systemModal p{
+  text-align:center;
+  font-size:16px;
+  margin-bottom:18px;
+}
+
+#systemModal input{
+  width:100%;
+  padding:16px;
+  font-size:22px;
+  text-align:center;
+  border-radius:16px;
+  border:2px solid var(--border);
+  outline:none;
+  letter-spacing:6px;
+}
+
+body.modal-open{
+  overflow:hidden;
+}
+
+#systemModal .save-btn{
+  display:block;
+  margin:0 auto;
+}
+
+#systemModal .save-btn{
+  min-width:160px;
+}
+/* ===============================
+   SALES SUMMARY – FIXED SIZE
+=============================== */
+.sales-summary{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:14px;
+  margin-bottom:18px;
+}
+
+/* FIX CARD SIZE */
+.sales-summary .summary-card{
+  height:110px;              /* ← fixed height */
+  padding:14px;
+  border-radius:18px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:hidden;           /* ← prevent growing */
+}
+
+/* LABEL (TITLE) */
+.sales-summary .summary-card .label{
+  font-size:13px;
+  font-weight:700;
+  opacity:.9;
+  white-space:nowrap;        /* ← no wrap */
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* VALUE (AMOUNT) */
+.sales-summary .summary-card .value{
+  font-size:24px;            /* ← fixed size */
+  font-weight:900;
+  line-height:1.1;
+  white-space:nowrap;        /* ← no wrap */
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* DARK MODE SAFE */
+body.dark .sales-summary .summary-card{
+  box-shadow:0 8px 20px rgba(0,0,0,.5);
+}
+
+/* MOBILE SAFE */
+@media (max-width:600px){
+  .sales-summary{
+    grid-template-columns:1fr;
+  }
+  .sales-summary .summary-card{
+    height:90px;
+  }
+}
+/* ===============================
+   SALES TITLE
+=============================== */
+.sales-title{
+  text-align:center;
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:16px;
+  letter-spacing:1px;
+}
+
+/* ===============================
+   CALENDAR DESIGN
+=============================== */
+.calendar-box{
+  margin-top:10px;
+  display:flex;
+  justify-content:center;
+}
+
+.calendar-box input[type="date"]{
+  width:140px;
+  padding:8px 10px;
+  font-size:13px;
+  font-weight:700;
+  border-radius:10px;
+  border:1.5px solid var(--border);
+  background:#fff;
+  cursor:pointer;
+}
+
+/* DARK MODE */
+body.dark .calendar-box input[type="date"]{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+
+/* ===============================
+   SALES ACTIONS
+=============================== */
+.sales-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
+
+/* ===============================
+   SALES HISTORY LIST ALIGNMENT
+=============================== */
+#salesHistory{
+  margin-top:8px;
+}
+
+.sales-entry{
+  align-items:flex-start;
+}
+
+.sales-entry > div:last-child{
+  text-align:right;
+  min-width:90px;
+}
+
+/* MOBILE SAFE */
+@media (max-width:600px){
+  .calendar-box input[type="date"]{
+    width:100%;
+  }
+}
+/* ===============================
+   SALES CALENDAR (OUTSIDE CARDS)
+=============================== */
+.sales-calendar{
+  display:flex;
+  justify-content:flex-start;
+  margin-bottom:12px;
+}
+
+.sales-calendar input[type="date"]{
+  width:160px;
+  padding:9px 12px;
+  font-size:14px;
+  font-weight:700;
+  border-radius:12px;
+  border:1.5px solid var(--border);
+  background:#fff;
+  cursor:pointer;
+}
+
+/* DARK MODE */
+body.dark .sales-calendar input[type="date"]{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+
+/* MOBILE */
+@media (max-width:600px){
+  .sales-calendar input[type="date"]{
+    width:100%;
+  }
+}
+/* ===============================
+   SALES TITLE
+=============================== */
+.sales-title{
+  text-align:center;
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:14px;
+  letter-spacing:1px;
+}
+
+/* ===============================
+   CALENDAR BETWEEN SECTIONS
+=============================== */
+.sales-calendar{
+  display:flex;
+  justify-content:flex-start;
+  margin:10px 0 14px;
+  padding-left:4px;
+}
+
+.sales-calendar input[type="date"]{
+  width:160px;
+  padding:9px 12px;
+  font-size:14px;
+  font-weight:700;
+  border-radius:12px;
+  border:1.5px solid var(--border);
+  background:#fff;
+  cursor:pointer;
+}
+
+/* DARK MODE */
+body.dark .sales-calendar input[type="date"]{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+
+/* ===============================
+   SALES ACTIONS
+=============================== */
+.sales-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:10px;
+}
+
+/* ===============================
+   SALES ENTRY ALIGNMENT
+=============================== */
+#salesHistory{
+  margin-top:6px;
+}
+
+.sales-entry{
+  align-items:flex-start;
+}
+
+.sales-entry > div:last-child{
+  text-align:right;
+  min-width:90px;
+}
+
+/* MOBILE SAFE */
+@media (max-width:600px){
+  .sales-calendar input[type="date"]{
+    width:100%;
+  }
+}
+header b{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:70vw;
+}
+
+header{
+  position:relative;
+}
+
+/* KEEP HEADER SPACE EVEN IF EMPTY */
+header b{
+  min-width:160px;        /* fixed space */
+  text-align:left;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* IF EMPTY, JUST MAKE IT INVISIBLE */
+header b:empty{
+  visibility:hidden;     /* ← important */
+}
+
+#pos-watermark{
+  position:fixed;
+  bottom:6px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.5px;
+  opacity:.35;
+  pointer-events:none; /* di naclick */
+  user-select:none;
+  z-index:1;
+  color:#000;
+}
+
+body.dark #pos-watermark{
+  color:#fff;
+  opacity:.25;
+}
+/* ======================================================
+   CHANGE PIN MODAL – UNIFORM WITH SYSTEM MODAL
+====================================================== */
+
+#changePinModal .modal-box{
+  width:90%;
+  max-width:420px;
+  height:auto;
+  min-height:unset;
+  padding:26px;
+  display:block;
+  text-align:center;
+}
+
+/* TITLE */
+#changePinModal h2{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:14px;
+  text-align:center;
+}
+
+/* INPUT */
+#changePinModal input{
+  width:100%;
+  padding:16px;
+  font-size:22px;
+  font-weight:900;
+  text-align:center;
+  border-radius:16px;
+  border:2px solid var(--border);
+  outline:none;
+  letter-spacing:6px;
+  margin-bottom:20px;
+}
+
+/* INPUT FOCUS */
+#changePinModal input:focus{
+  border-color:#28a745;
+  box-shadow:0 0 0 3px rgba(40,167,69,.25);
+}
+
+/* ACTIONS */
+#changePinModal .actions{
+  display:flex;
+  gap:14px;
+}
+
+/* DARK MODE */
+body.dark #changePinModal .modal-box{
+  background:linear-gradient(180deg,#1c1c1c,#111);
+}
+
+body.dark #changePinModal input{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+.cancel-btn{
+  margin-top:10px;
+  background:linear-gradient(135deg,#6c757d,#adb5bd);
+  color:#fff;
+  border:none;
+  padding:18px;
+  font-size:20px;
+  font-weight:900;
+  border-radius:22px;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(0,0,0,.25);
+}
+
+.cancel-btn:active{
+  transform:scale(.96);
+}
+
+body.dark .cancel-btn{
+  background:linear-gradient(135deg,#444,#666);
+}
+/* ===============================
+   SALES SUMMARY – SMALL GREEN BOX ONLY
+=============================== */
+.sales-summary{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:14px;
+  margin-bottom:18px;
+}
+
+/* GREEN BOX LANG ANG LIIT */
+.sales-summary .summary-card{
+  height:80px;                 /* ← mas maliit na green box */
+  padding:10px;
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;      /* ← vertical center */
+  align-items:center;          /* ← horizontal center */
+  text-align:center;
+}
+
+/* LABEL (TEXT – PALAKI) */
+.sales-summary .summary-card .label{
+  font-size:14px;              /* ← mas malaki */
+  font-weight:800;
+  margin-bottom:4px;
+  opacity:.95;
+}
+
+/* VALUE (AMOUNT – MAS MALAKI PA) */
+.sales-summary .summary-card .value{
+  font-size:26px;              /* ← mas malaki */
+  font-weight:900;
+  line-height:1;
+}
+
+/* DARK MODE SAFE */
+body.dark .sales-summary .summary-card{
+  box-shadow:0 6px 16px rgba(0,0,0,.5);
+}
+
+/* MOBILE SAFE */
+@media (max-width:600px){
+  .sales-summary{
+    grid-template-columns:1fr;
+  }
+  .sales-summary .summary-card{
+    height:70px;
+  }
+}
+/* ===============================
+   ORDER INFO – CASH / CHANGE / QTY
+=============================== */
+.order-info{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:12px;
+}
+
+/* CARD */
+.info-card{
+  height:70px;
+  border-radius:16px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.25);
+}
+
+/* LABEL */
+.info-card .label{
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.5px;
+  margin-bottom:4px;
+  opacity:.9;
+}
+
+/* VALUE */
+.info-card .value{
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+}
+
+/* COLORS */
+.info-card.cash{
+  background:linear-gradient(135deg,#0d6efd,#4dabff);
+  color:#fff;
+}
+.info-card.change{
+  background:linear-gradient(135deg,#28a745,#6bff9a);
+  color:#fff;
+}
+.info-card.qty{
+  background:linear-gradient(135deg,#ff9800,#ffc107);
+  color:#111;
+}
+
+/* DARK MODE */
+body.dark .info-card{
+  box-shadow:0 6px 16px rgba(0,0,0,.5);
+}
+
+/* MOBILE */
+@media (max-width:600px){
+  .order-info{
+    grid-template-columns:1fr;
+  }
+  .info-card{
+    height:64px;
+  }
+}
+
+/* ======================================================
+   EXTRA SMALL PHONE (≈ 6.5 inches pababa)
+====================================================== */
+@media (max-width:420px){
+
+  /* ===== GLOBAL SPACING ===== */
+  body{
+    font-size:14px;
+  }
+
+  main{
+    padding:10px;
+    gap:12px;
+  }
+
+  /* ===== HEADER ===== */
+  header{
+    height:56px;
+    padding:0 12px;
+  }
+
+  header b{
+    font-size:18px;
+    min-width:120px;
+  }
+
+  #hamburger{
+    font-size:26px;
+  }
+
+  /* ===== MENU ===== */
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+
+  .menu-card{
+    padding:12px;
+    border-radius:18px;
+  }
+
+  .menu-card img{
+    height:110px;
+    border-radius:14px;
+  }
+
+  .menu-name{
+    font-size:15px;
+    margin-bottom:8px;
+  }
+
+  .price-btn{
+    padding:12px;
+    font-size:18px;
+    border-radius:16px;
+  }
+
+  .stock-badge{
+    font-size:11px;
+    padding:6px 10px;
+  }
+
+  /* ===== CART ===== */
+  #cart{
+    padding:14px;
+    border-radius:20px;
+  }
+
+  #cart h3{
+    font-size:17px;
+  }
+
+  .cart-item{
+    font-size:14px;
+  }
+
+  .qty-btn{
+    padding:6px 12px;
+    font-size:16px;
+  }
+
+  .total-box{
+    font-size:22px;
+    padding:14px;
+    border-radius:18px;
+  }
+
+  /* ===== ORDER INFO ===== */
+  .order-info{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .info-card{
+    height:56px;
+  }
+
+  .info-card .label{
+    font-size:12px;
+  }
+
+  .info-card .value{
+    font-size:18px;
+  }
+
+  /* ===== NUMPAD ===== */
+  .numpad{
+    gap:8px;
+  }
+
+  .numpad button{
+    padding:14px;
+    font-size:18px;
+    border-radius:14px;
+  }
+
+  /* ===== ACTION BUTTONS ===== */
+  .checkout-btn{
+    padding:16px;
+    font-size:20px;
+    border-radius:20px;
+  }
+
+  .cancel-btn{
+    padding:14px;
+    font-size:18px;
+    border-radius:18px;
+  }
+
+  /* ===== SALES ===== */
+  .sales-container{
+    margin:10px;
+    padding:14px;
+  }
+
+  .sales-title{
+    font-size:18px;
+    margin-bottom:10px;
+  }
+
+  .sales-summary{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .sales-summary .summary-card{
+    height:64px;
+    padding:8px;
+  }
+
+  .sales-summary .summary-card .label{
+    font-size:12px;
+  }
+
+  .sales-summary .summary-card .value{
+    font-size:20px;
+  }
+
+  .sales-entry{
+    font-size:13px;
+  }
+
+  .sales-items{
+    font-size:12px;
+  }
+
+  .void-btn{
+    font-size:11px;
+    padding:5px 10px;
+  }
+
+  /* ===== CALENDAR ===== */
+  .sales-calendar input[type="date"]{
+    width:100%;
+    font-size:13px;
+    padding:8px 10px;
+  }
+
+  /* ===== MODALS ===== */
+  .modal-box{
+    width:94vw;
+    height:auto;
+    max-height:90vh;
+    padding:16px;
+    grid-template-columns:1fr;
+  }
+
+  .product-item{
+    padding:10px;
+  }
+
+  .product-item img{
+    width:54px;
+    height:54px;
+  }
+
+  .form h2{
+    font-size:18px;
+  }
+
+  .form input{
+    padding:12px;
+    font-size:14px;
+  }
+}
+/* ======================================================
+   ULTRA COMPACT PHONE MODE (ONE-HAND POS)
+====================================================== */
+@media (max-width:360px){
+
+  /* ===== GLOBAL ===== */
+  body{
+    font-size:13px;
+  }
+
+  main{
+    padding:8px;
+    gap:8px;
+  }
+
+  /* ===== HEADER ===== */
+  header{
+    height:52px;
+    padding:0 10px;
+  }
+
+  header b{
+    font-size:16px;
+    min-width:100px;
+  }
+
+  #hamburger{
+    font-size:24px;
+  }
+
+  /* ===== MENU (1 COLUMN) ===== */
+  #menu{
+    grid-template-columns:1fr;   /* 🔥 ONE COLUMN */
+    gap:8px;
+  }
+
+  .menu-card{
+    padding:10px;
+    border-radius:16px;
+  }
+
+  .menu-card img{
+    height:90px;
+    border-radius:12px;
+  }
+
+  .menu-name{
+    font-size:14px;
+    margin-bottom:6px;
+  }
+
+  .price-btn{
+    padding:10px;
+    font-size:16px;
+    border-radius:14px;
+  }
+
+  .stock-badge{
+    font-size:10px;
+    padding:5px 8px;
+  }
+
+  /* ===== CART (FLOATING STYLE) ===== */
+  #cart{
+    position:sticky;
+    bottom:6px;
+    padding:12px;
+    border-radius:18px;
+    box-shadow:0 12px 28px rgba(0,0,0,.35);
+  }
+
+  #cart h3{
+    font-size:15px;
+    margin-bottom:8px;
+  }
+
+  .cart-item{
+    font-size:13px;
+  }
+
+  .qty-btn{
+    padding:5px 10px;
+    font-size:14px;
+  }
+
+  .total-box{
+    font-size:20px;
+    padding:12px;
+    border-radius:16px;
+  }
+
+  /* ===== ORDER INFO (STACKED) ===== */
+  .order-info{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .info-card{
+    height:52px;
+  }
+
+  .info-card .label{
+    font-size:11px;
+  }
+
+  .info-card .value{
+    font-size:17px;
+  }
+
+  /* ===== NUMPAD (SMALLER BUT FAT FINGERS OK) ===== */
+  .numpad{
+    gap:6px;
+  }
+
+  .numpad button{
+    padding:12px;
+    font-size:16px;
+    border-radius:12px;
+  }
+
+  /* ===== ACTION BUTTONS ===== */
+  .checkout-btn{
+    padding:14px;
+    font-size:18px;
+    border-radius:18px;
+  }
+
+  .cancel-btn{
+    padding:12px;
+    font-size:16px;
+    border-radius:16px;
+  }
+
+  /* ===== SALES (AUTO HIDE DETAILS) ===== */
+  .sales-items{
+    display:none; /* 🔥 hide item list */
+  }
+
+  .sales-summary{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .sales-summary .summary-card{
+    height:58px;
+    padding:6px;
+  }
+
+  .sales-summary .summary-card .label{
+    font-size:11px;
+  }
+
+  .sales-summary .summary-card .value{
+    font-size:18px;
+  }
+
+  .sales-entry{
+    font-size:12px;
+  }
+
+  /* ===== CALENDAR ===== */
+  .sales-calendar input[type="date"]{
+    font-size:12px;
+    padding:6px 8px;
+  }
+
+  /* ===== MODALS ===== */
+  .modal-box{
+    width:96vw;
+    padding:14px;
+    grid-template-columns:1fr;
+  }
+
+  .product-item{
+    padding:8px;
+  }
+
+  .product-item img{
+    width:46px;
+    height:46px;
+  }
+
+  .form h2{
+    font-size:16px;
+  }
+
+  .form input{
+    padding:10px;
+    font-size:13px;
+  }
+}
+/* ======================================================
+   PHONE LANDSCAPE = DESKTOP VIEW
+====================================================== */
+@media (max-width:1024px) and (orientation:landscape){
+
+  /* ===== MAIN LAYOUT ===== */
+  main{
+    grid-template-columns:3.2fr 1.4fr; /* same as PC */
+    gap:20px;
+    padding:16px;
+  }
+
+  /* ===== MENU ===== */
+  #menu{
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:18px;
+  }
+
+  .menu-card img{
+    height:160px;
+  }
+
+  /* ===== CART ===== */
+  #cart{
+    position:relative;  /* remove sticky */
+    bottom:auto;
+    z-index:auto;
+  }
+
+  /* ===== ORDER INFO ===== */
+  .order-info{
+    grid-template-columns:repeat(3,1fr); /* same as PC */
+  }
+
+  /* ===== NUMPAD ===== */
+  .numpad{
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+  }
+
+  /* ===== SALES ===== */
+  .sales-summary{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .sales-items{
+    display:block; /* show items again */
+  }
+
+  /* ===== HEADER ===== */
+  header{
+    height:64px;
+  }
+
+  header b{
+    font-size:22px;
+  }
+
+  #hamburger{
+    font-size:32px;
+  }
+
+  /* ===== FONT RESET ===== */
+  body{
+    font-size:16px;
+  }
+}
+/* ======================================================
+   FINAL RESPONSIVE RULESET (IPHONE ≤17)
+====================================================== */
+
+/* ======================================================
+   1️⃣ PHONE PORTRAIT ONLY (COMPLEX MOBILE UI)
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  main{
+    grid-template-columns:1fr;
+    gap:14px;
+    padding:12px;
+  }
+
+  /* MENU */
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  /* CART */
+  #cart{
+    position:sticky;
+    bottom:0;
+    z-index:100;
+  }
+
+  /* ORDER INFO */
+  .order-info{
+    grid-template-columns:1fr;
+  }
+
+  /* SALES */
+  .sales-summary{
+    grid-template-columns:1fr;
+  }
+
+  /* MODALS — FULL WIDTH */
+  .modal-box{
+    width:94vw;
+    max-width:94vw;
+    height:auto;
+    max-height:90vh;
+    grid-template-columns:1fr;
+  }
+
+  /* SYSTEM / PIN MODALS */
+  #systemModal .modal-box,
+  #changePinModal .modal-box{
+    width:92vw;
+    max-width:92vw;
+  }
+}
+
+/* ======================================================
+   2️⃣ PHONE LANDSCAPE = FORCE DESKTOP MODE
+====================================================== */
+@media (max-width:932px) and (orientation:landscape){
+
+  /* RESET ALL MOBILE BEHAVIOR */
+  body{
+    font-size:16px;
+  }
+
+  main{
+    grid-template-columns:3.2fr 1.4fr;
+    gap:20px;
+    padding:16px;
+  }
+
+  /* MENU = DESKTOP GRID */
+  #menu{
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  }
+
+  /* CART = NORMAL (NOT STICKY) */
+  #cart{
+    position:relative !important;
+    bottom:auto !important;
+  }
+
+  /* ORDER INFO = 3 COLUMNS */
+  .order-info{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  /* SALES SUMMARY = 3 COLUMNS */
+  .sales-summary{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .sales-items{
+    display:block;
+  }
+
+  /* MODALS = DESKTOP SIZE */
+  .modal-box{
+    width:92vw;
+    max-width:1000px;
+    height:88vh;
+    grid-template-columns:1.2fr 1fr;
+  }
+
+  #systemModal .modal-box,
+  #changePinModal .modal-box{
+    width:420px;
+    max-width:420px;
+  }
+}
+
+/* ======================================================
+   3️⃣ DESKTOP / TABLET — NO CHANGE
+====================================================== */
+@media (min-width:933px){
+  /* intentionally empty — desktop rules already apply */
+}
+/* ======================================================
+   🔥 FINAL PHONE PORTRAIT FIX (MENU VISIBLE ALWAYS)
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  /* RESET BAD RULES */
+  html, body{
+    height:100%;
+    overflow:auto;   /* 🔥 IMPORTANT */
+  }
+
+  /* HEADER */
+  header{
+    height:56px;
+    flex-shrink:0;
+  }
+
+  /* MAIN = COLUMN */
+  main{
+    display:flex;
+    flex-direction:column;
+    height:auto;     /* 🔥 REMOVE calc() */
+    padding:8px;
+    gap:8px;
+  }
+
+  /* ======================
+     MENU — TOP PRIORITY
+  ====================== */
+  .menu-container{
+    order:1;
+    max-height:45vh;        /* 🔥 GUARANTEED VISIBLE */
+    overflow-y:auto;        /* SCROLL MENU */
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+
+  .menu-card img{
+    height:120px;
+  }
+
+  /* ======================
+     ORDER — MIDDLE
+  ====================== */
+  #cart{
+    order:2;
+    position:relative;      /* 🔥 NOT FIXED */
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #cartItems{
+    max-height:18vh;
+    overflow-y:auto;
+  }
+
+  .order-info{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  /* ======================
+     SALES — BOTTOM
+  ====================== */
+  .sales-container{
+    order:3;
+    max-height:35vh;        /* 🔥 SCROLLABLE BOTTOM */
+    overflow-y:auto;
+    margin:0;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  .sales-summary{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  /* ======================
+     BUTTONS / NUMPAD
+  ====================== */
+  .numpad{
+    gap:6px;
+  }
+
+  .numpad button{
+    padding:14px;
+    font-size:17px;
+  }
+
+  .checkout-btn{
+    font-size:20px;
+    padding:16px;
+  }
+
+  .cancel-btn{
+    font-size:16px;
+    padding:14px;
+  }
+
+  /* ======================
+     MODALS SAFE
+  ====================== */
+  .modal-box{
+    width:94vw;
+    max-width:94vw;
+    max-height:92vh;
+    height:auto;
+    grid-template-columns:1fr;
+  }
+
+  #productModal .modal-box{
+    display:flex;
+    flex-direction:column;
+  }
+}
+/* FIX EDIT PRODUCT MODAL ON PHONE */
+@media (max-width:600px){
+  #productModal .modal-box{
+    display:flex;
+    flex-direction:column;
+    height:90vh;
+    overflow:hidden;
+  }
+
+  #productModal .product-list{
+    border-right:none;
+    border-bottom:2px solid var(--border);
+    max-height:40vh;
+    overflow-y:auto;
+  }
+
+  #productModal .form{
+    overflow-y:auto;
+  }
+}
+@media (max-width:430px) and (orientation:portrait){
+
+  html, body{
+    height:100%;
+    overflow:auto;
+  }
+
+  main{
+    display:flex;
+    flex-direction:column;
+    padding:8px;
+    gap:8px;
+  }
+
+  .menu-container{
+    order:1;
+    max-height:45vh;
+    overflow-y:auto;
+  }
+
+  #cart{
+    order:2;
+    position:relative;
+  }
+
+  .sales-container{
+    order:3;
+    max-height:35vh;
+    overflow-y:auto;
+    margin:0;
+  }
+}
+/* ======================================================
+   🔥 FIX: MENU ALWAYS VISIBLE (PHONE PORTRAIT)
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  /* allow normal scrolling */
+  html, body{
+    height:100%;
+    overflow:auto;
+  }
+
+  /* stack layout */
+  main{
+    display:flex;
+    flex-direction:column;
+    padding:8px;
+    gap:8px;
+  }
+
+  /* ======================
+     MENU — TOP & VISIBLE
+  ====================== */
+  .menu-container{
+    order:1;
+    max-height:50vh;        /* 👈 guaranteed visible */
+    overflow-y:auto;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+
+  .menu-card img{
+    height:120px;
+  }
+
+  /* ======================
+     ORDER — BELOW MENU
+  ====================== */
+  #cart{
+    order:2;
+    position:relative;     /* ❌ NOT sticky */
+    bottom:auto;
+    padding:12px;
+  }
+
+  #cartItems{
+    max-height:20vh;
+    overflow-y:auto;
+  }
+
+  /* ======================
+     SALES — LAST
+  ====================== */
+  .sales-container{
+    order:3;
+    max-height:30vh;
+    overflow-y:auto;
+    margin:0;
+    padding:12px;
+  }
+}
+/* ======================================================
+   🔥 AUTO FONT ADJUST – PRODUCT NAME (PHONE PORTRAIT)
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  .menu-name{
+    font-weight:900;
+    text-align:center;
+    line-height:1.2;
+    word-break:break-word;
+    white-space:normal;
+
+    /* default size */
+    font-size:15px;
+
+    /* space for text */
+    min-height:2.8em;
+  }
+
+  /* 🔽 if name is long (wraps to 2+ lines) */
+  .menu-name{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;   /* max 3 lines */
+    overflow:hidden;
+  }
+}
+
+/* ======================================================
+   EXTRA LONG NAMES – SHRINK MORE
+====================================================== */
+@media (max-width:430px){
+
+  .menu-name{
+    font-size:clamp(12px, 3.5vw, 15px);
+    /* 👆 auto scales:
+       - min: 12px
+       - max: 15px
+       - based on screen width */
+  }
+}
+/* ======================================================
+   🔥 FINAL FIX: MENU NOT SCROLLABLE (PHONE PORTRAIT)
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  /* PAGE ANG SCROLLABLE */
+  html, body{
+    height:auto;
+    overflow:auto;
+  }
+
+  /* MAIN STACK */
+  main{
+    display:flex;
+    flex-direction:column;
+    padding:8px;
+    gap:10px;
+  }
+
+  /* ======================
+     MENU — FIXED / STATIC
+  ====================== */
+  .menu-container{
+    order:1;
+    max-height:none;        /* ❌ remove limit */
+    overflow:visible;       /* ❌ no scroll */
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+
+  /* ======================
+     ORDER — BELOW MENU
+  ====================== */
+  #cart{
+    order:2;
+    position:relative;     /* ❌ not sticky */
+    padding:12px;
+    border-radius:20px;
+  }
+
+  /* ======================
+     SALES — LAST
+  ====================== */
+  .sales-container{
+    order:3;
+    max-height:none;       /* ❌ no internal scroll */
+    overflow:visible;
+    margin:0;
+    padding:12px;
+    border-radius:20px;
+  }
+}
+/* ======================================================
+   🔥 FIX: MOVE PRODUCT NAME BELOW STOCK BADGE
+   PHONE PORTRAIT SAFE
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  /* MENU CARD STRUCTURE */
+  .menu-card{
+    display:flex;
+    flex-direction:column;
+    height:auto !important;
+    padding-top:38px; /* 👈 space for stock badge */
+  }
+
+  /* STOCK BADGE – STAY ON TOP */
+  .stock-badge{
+    position:absolute;
+    top:10px;
+    right:10px;
+    z-index:2;
+  }
+
+  /* IMAGE */
+  .menu-card img{
+    height:110px;
+    margin-bottom:6px;
+    flex-shrink:0;
+  }
+
+  /* PRODUCT NAME – BELOW IMAGE & STOCK */
+  .menu-name{
+    order:2;               /* 👈 always after image */
+    margin:6px 0 8px;
+
+    font-weight:900;
+    text-align:center;
+    line-height:1.2;
+
+    /* responsive font */
+    font-size:clamp(12px, 3.6vw, 15px);
+
+    /* allow wrap */
+    white-space:normal;
+    word-break:break-word;
+
+    /* safe limit */
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+
+    min-height:3.6em;      /* 🔥 guaranteed space */
+  }
+
+  /* PRICE BUTTON – LAST */
+  .price-btn{
+    order:3;
+    margin-top:8px;
+    flex-shrink:0;
+  }
+}
+/* ======================================================
+   🔥 ULTRA-COMPACT MENU CARD (PHONE PORTRAIT)
+   - dikit ang stock, name, price
+   - maliit ang card
+   - walang tabunan
+====================================================== */
+@media (max-width:430px) and (orientation:portrait){
+
+  /* CARD */
+  .menu-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    padding:10px;
+    padding-top:28px;      /* space lang para sa stock badge */
+    border-radius:16px;
+    height:auto !important;
+  }
+
+  /* STOCK BADGE */
+  .stock-badge{
+    position:absolute;
+    top:6px;
+    right:6px;
+    padding:4px 8px;       /* mas maliit */
+    font-size:10px;
+    font-weight:900;
+    border-radius:999px;
+  }
+
+  /* IMAGE – MAS MALIIT */
+  .menu-card img{
+    height:90px;
+    border-radius:12px;
+    margin-bottom:4px;     /* dikit sa name */
+    flex-shrink:0;
+  }
+
+  /* PRODUCT NAME – COMPACT */
+  .menu-name{
+    margin:2px 0 4px;      /* 🔥 dikit-dikit */
+    text-align:center;
+    font-weight:900;
+    line-height:1.15;
+
+    /* auto-adjust font */
+    font-size:clamp(11px, 3.4vw, 14px);
+
+    white-space:normal;
+    word-break:break-word;
+
+    /* max 2 lines lang para compact */
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+
+    min-height:2.3em;      /* sapat para 2 lines */
+  }
+
+  /* PRICE BUTTON – COMPACT */
+  .price-btn{
+    margin-top:4px;        /* dikit sa name */
+    padding:10px;
+    font-size:18px;
+    border-radius:14px;
+    font-weight:900;
+  }
+}
+/* ======================================================
+   🔥 TABLET PORTRAIT = PHONE PORTRAIT LAYOUT
+   (iPad / Tablets / Large phones)
+====================================================== */
+@media (orientation:portrait) and (max-width:1024px){
+
+  /* PAGE SCROLL */
+  html, body{
+    height:auto;
+    overflow:auto;
+  }
+
+  /* MAIN STACK */
+  main{
+    display:flex;
+    flex-direction:column;
+    padding:10px;
+    gap:10px;
+  }
+
+  /* ======================
+     MENU — TOP
+  ====================== */
+  .menu-container{
+    order:1;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+
+  .menu-card{
+    padding:12px;
+    border-radius:18px;
+  }
+
+  .menu-card img{
+    height:130px;
+  }
+
+  .menu-name{
+    font-size:clamp(13px, 2.8vw, 16px);
+    line-height:1.2;
+    text-align:center;
+  }
+
+  /* ======================
+     ORDER — MIDDLE
+  ====================== */
+  #cart{
+    order:2;
+    position:relative;   /* ❌ not sticky */
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #cartItems{
+    max-height:22vh;
+    overflow-y:auto;
+  }
+
+  .order-info{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  /* ======================
+     SALES — BOTTOM
+  ====================== */
+  .sales-container{
+    order:3;
+    margin:0;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  .sales-summary{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  /* ======================
+     BUTTONS
+  ====================== */
+  .checkout-btn{
+    font-size:22px;
+    padding:18px;
+  }
+
+  .cancel-btn{
+    font-size:18px;
+    padding:16px;
+  }
+
+  /* ======================
+     MODALS — FULL WIDTH
+  ====================== */
+  .modal-box{
+    width:94vw;
+    max-width:94vw;
+    height:auto;
+    max-height:90vh;
+    grid-template-columns:1fr;
+  }
+}
+/* ======================================================
+   🔥 CASH / CHANGE / QTY — ROW SA PHONE & TABLET PORTRAIT
+====================================================== */
+@media (orientation:portrait) and (max-width:1024px){
+
+  .order-info{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr); /* 👈 ROW */
+    gap:10px;
+  }
+
+  .info-card{
+    height:64px;
+    padding:8px;
+    border-radius:14px;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+  }
+
+  .info-card .label{
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:2px;
+    opacity:.9;
+    white-space:nowrap;
+  }
+
+  .info-card .value{
+    font-size:20px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+  }
+}
+
+/* ======================================================
+   🔥 ULTRA SMALL PHONE SAFETY (STACK IF TOO NARROW)
+====================================================== */
+@media (max-width:360px) and (orientation:portrait){
+
+  .order-info{
+    grid-template-columns:1fr; /* 👈 fallback stack */
+    gap:8px;
+  }
+
+  .info-card{
+    height:56px;
+  }
+
+  .info-card .value{
+    font-size:18px;
+  }
+}
+/* ======================================================
+   🔢 FINAL OVERRIDE — NUMPAD BUTTON ALIGNMENT
+   SAME SIZE | CENTERED | RESPONSIVE
+====================================================== */
+
+/* NUMPAD GRID */
+.numpad{
+  display:grid !important;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+}
+
+/* NUMPAD BUTTON — PERFECT SQUARE */
+.numpad button{
+  width:100% !important;      /* equal column width */
+  height:60px !important;     /* 🔒 fixed height */
+  padding:0 !important;
+
+  font-size:22px;
+  font-weight:900;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  border-radius:16px;
+  line-height:1;
+}
+
+/* ======================================================
+   TABLET & PHONE PORTRAIT
+====================================================== */
+@media (orientation:portrait) and (max-width:1024px){
+  .numpad{
+    gap:8px;
+  }
+  .numpad button{
+    height:54px !important;
+    font-size:20px;
+    border-radius:14px;
+  }
+}
+
+/* ======================================================
+   PHONE LANDSCAPE
+====================================================== */
+@media (orientation:landscape) and (max-width:932px){
+  .numpad{
+    gap:8px;
+  }
+  .numpad button{
+    height:50px !important;
+    font-size:19px;
+    border-radius:14px;
+  }
+}
+
+/* ======================================================
+   SMALL PHONE (≤ 360px)
+====================================================== */
+@media (max-width:360px){
+  .numpad{
+    gap:6px;
+  }
+  .numpad button{
+    height:44px !important;
+    font-size:17px;
+    border-radius:12px;
+  }
+}
+/* ======================================================
+   🔥 FINAL HARD OVERRIDE — ORDER NEVER SCROLLS
+   NO INTERNAL SCROLL | PAGE SCROLL ONLY
+====================================================== */
+
+/* ORDER CONTAINER */
+#cart{
+  position:relative !important;
+  overflow:visible !important;
+  max-height:none !important;
+}
+
+/* ORDER ITEMS */
+#cartItems{
+  overflow:visible !important;
+  max-height:none !important;
+  height:auto !important;
+}
+
+/* PREVENT ANY HIDDEN SCROLL */
+#cart *{
+  overflow:visible !important;
+}
+/* ======================================================
+   🔥 PHONE LANDSCAPE = SAME AS PORTRAIT (PHONE RATIO)
+   Applies ONLY to phones
+====================================================== */
+@media (max-width:932px) and (orientation:landscape){
+
+  /* Treat phone landscape as portrait */
+  html, body{
+    height:auto;
+    overflow:auto;
+  }
+
+  /* STACK LAYOUT */
+  main{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px;
+  }
+
+  /* MENU ON TOP */
+  .menu-container{
+    order:1;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #menu{
+    grid-template-columns:repeat(2,1fr); /* phone grid */
+    gap:10px;
+  }
+
+  .menu-card img{
+    height:110px;
+  }
+
+  /* ORDER IN MIDDLE */
+  #cart{
+    order:2;
+    position:relative;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  #cartItems{
+    max-height:22vh;
+    overflow-y:auto;
+  }
+
+  .order-info{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  /* SALES AT BOTTOM */
+  .sales-container{
+    order:3;
+    margin:0;
+    padding:12px;
+    border-radius:20px;
+  }
+
+  .sales-summary{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  /* NUMPAD */
+  .numpad button{
+    height:52px;
+    font-size:18px;
+  }
+
+  /* MODALS = FULL WIDTH */
+  .modal-box{
+    width:94vw;
+    max-width:94vw;
+    height:auto;
+    max-height:90vh;
+    grid-template-columns:1fr;
+  }
+}
+/* ======================================================
+   🔥 MENU GRID — 3 ITEMS PER ROW (PHONE RESPONSIVE)
+   Portrait + Landscape (PHONE ONLY)
+====================================================== */
+@media (max-width:932px){
+
+  /* MENU GRID */
+  #menu{
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+
+  /* MENU CARD ADJUSTMENT */
+  .menu-card{
+    padding:10px;
+    border-radius:16px;
+  }
+
+  /* IMAGE SIZE — FIT 3 PER ROW */
+  .menu-card img{
+    height:90px;
+    border-radius:12px;
+    margin-bottom:4px;
+  }
+
+  /* PRODUCT NAME — COMPACT */
+  .menu-name{
+    font-size:clamp(11px, 3.2vw, 14px);
+    line-height:1.15;
+    margin:2px 0 4px;
+
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  /* PRICE BUTTON — SMALLER BUT CLICKABLE */
+  .price-btn{
+    padding:10px;
+    font-size:17px;
+    border-radius:14px;
+  }
+
+  /* STOCK BADGE — SHRINK */
+  .stock-badge{
+    font-size:10px;
+    padding:4px 8px;
+    top:6px;
+    right:6px;
+  }
+}
+/* ======================================================
+   🔥 MICRO SCREEN MODE (≤ 360px WIDTH)
+   Ultra-small Android / old phones
+====================================================== */
+@media (max-width:360px){
+
+  /* ===== GLOBAL ===== */
+  body{
+    font-size:13px;
+  }
+
+  header{
+    height:48px;
+    padding:0 8px;
+  }
+
+  header b{
+    font-size:15px;
+    min-width:90px;
+  }
+
+  #hamburger{
+    font-size:22px;
+  }
+
+  /* ===== MAIN STACK ===== */
+  main{
+    padding:6px;
+    gap:6px;
+  }
+
+  /* =================================================
+     MENU — PRIORITY AREA
+  ================================================= */
+  .menu-container{
+    padding:8px;
+    border-radius:14px;
+  }
+
+  #menu{
+    grid-template-columns:repeat(3,1fr); /* 🔥 3 per row */
+    gap:6px;
+  }
+
+  .menu-card{
+    padding:6px;
+    border-radius:12px;
+  }
+
+  .menu-card img{
+    height:70px;
+    border-radius:8px;
+    margin-bottom:2px;
+  }
+
+  .menu-name{
+    font-size:11px;
+    line-height:1.1;
+    margin:2px 0;
+
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  .stock-badge{
+    font-size:9px;
+    padding:3px 6px;
+    top:4px;
+    right:4px;
+  }
+
+  .price-btn{
+    padding:8px;
+    font-size:14px;
+    border-radius:10px;
+  }
+
+  /* =================================================
+     ORDER — COMPACT
+  ================================================= */
+  #cart{
+    padding:8px;
+    border-radius:14px;
+  }
+
+  #cart h3{
+    font-size:14px;
+    margin-bottom:4px;
+  }
+
+  .cart-item{
+    font-size:12px;
+    padding:6px 0;
+  }
+
+  .qty-btn{
+    padding:4px 8px;
+    font-size:14px;
+  }
+
+  .total-box{
+    font-size:18px;
+    padding:10px;
+    border-radius:12px;
+  }
+
+  /* ===== ORDER INFO (ROW, SMALL) ===== */
+  .order-info{
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+  }
+
+  .info-card{
+    height:48px;
+    padding:6px;
+    border-radius:10px;
+  }
+
+  .info-card .label{
+    font-size:10px;
+  }
+
+  .info-card .value{
+    font-size:15px;
+  }
+
+  /* =================================================
+     NUMPAD — FAT FINGER SAFE
+  ================================================= */
+  .numpad{
+    gap:6px;
+  }
+
+  .numpad button{
+    height:40px !important;
+    font-size:16px;
+    border-radius:10px;
+  }
+
+  /* =================================================
+     ACTION BUTTONS
+  ================================================= */
+  .checkout-btn{
+    font-size:17px;
+    padding:12px;
+    border-radius:14px;
+  }
+
+  .cancel-btn{
+    font-size:15px;
+    padding:10px;
+    border-radius:12px;
+  }
+
+  /* =================================================
+     SALES — COLLAPSED VIEW
+  ================================================= */
+  .sales-container{
+    padding:8px;
+    border-radius:14px;
+  }
+
+  .sales-title{
+    font-size:15px;
+    margin-bottom:6px;
+  }
+
+  .sales-summary{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .sales-summary .summary-card{
+    height:52px;
+    padding:6px;
+  }
+
+  .sales-summary .summary-card .label{
+    font-size:10px;
+  }
+
+  .sales-summary .summary-card .value{
+    font-size:16px;
+  }
+
+  .sales-items{
+    display:none; /* 🔥 hide long text */
+  }
+
+  .void-btn{
+    font-size:10px;
+    padding:4px 8px;
+  }
+
+  /* =================================================
+     MODALS — FULL WIDTH
+  ================================================= */
+  .modal-box{
+    width:96vw;
+    max-width:96vw;
+    padding:12px;
+    border-radius:16px;
+  }
+}
+/* ======================================================
+   🔥 UNIFIED MODAL DESIGN SYSTEM
+====================================================== */
+
+/* OVERLAY */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(6px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:3000;
+}
+
+/* BASE MODAL BOX */
+.modal-box{
+  width:90%;
+  max-width:420px;
+  background:linear-gradient(180deg,#ffffff,#f5f5f5);
+  border-radius:22px;
+  padding:22px;
+  box-shadow:0 20px 50px rgba(0,0,0,.45);
+  text-align:center;
+  animation:modalPop .18s ease;
+}
+
+/* DARK MODE */
+body.dark .modal-box{
+  background:linear-gradient(180deg,#1c1c1c,#111);
+  color:#f5f5f5;
+}
+
+/* TITLE */
+.modal-box h2{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:10px;
+}
+
+/* TEXT */
+.modal-box p{
+  font-size:15px;
+  margin-bottom:16px;
+  opacity:.9;
+}
+
+/* INPUT */
+.modal-box input{
+  width:100%;
+  padding:16px;
+  font-size:20px;
+  font-weight:900;
+  text-align:center;
+  border-radius:14px;
+  border:2px solid var(--border);
+  outline:none;
+  margin-bottom:18px;
+  letter-spacing:6px;
+}
+
+.modal-box input:focus{
+  border-color:#28a745;
+  box-shadow:0 0 0 3px rgba(40,167,69,.25);
+}
+
+body.dark .modal-box input{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+
+/* ACTIONS */
+.modal-box .actions{
+  display:flex;
+  gap:12px;
+}
+
+/* BUTTONS */
+.modal-box button{
+  flex:1;
+  padding:14px;
+  font-size:18px;
+  font-weight:900;
+  border:none;
+  border-radius:16px;
+  cursor:pointer;
+}
+
+/* PRIMARY */
+.modal-box .save-btn{
+  background:linear-gradient(135deg,#28a745,#6bff9a);
+  color:#fff;
+}
+
+/* SECONDARY */
+.modal-box .close-btn{
+  background:linear-gradient(135deg,#dc3545,#ff7b7b);
+  color:#fff;
+}
+
+/* SINGLE BUTTON CENTER */
+.modal-box .single{
+  justify-content:center;
+}
+.modal-box .single button{
+  flex:none;
+  min-width:160px;
+}
+
+/* ANIMATION */
+@keyframes modalPop{
+  from{ transform:scale(.92); opacity:0 }
+  to{ transform:scale(1); opacity:1 }
+}
+
+/* LOCK BODY */
+body.modal-open{
+  overflow:hidden;
+}
+
+/* MOBILE SAFE */
+@media (max-width:360px){
+  .modal-box{
+    max-width:94vw;
+    padding:18px;
+  }
+  .modal-box h2{ font-size:20px }
+  .modal-box button{ font-size:16px }
+}
+/* ======================================================
+   🔒 SMALL / SYSTEM MODALS ONLY
+   (alert, confirm, pin, key activation)
+====================================================== */
+#systemModal .modal-box,
+#changePinModal .modal-box,
+#keyLockModal .modal-box{
+  width:90%;
+  max-width:420px;
+  height:auto;
+  min-height:unset;
+  display:block;
+  padding:26px;
+  text-align:center;
+}
+
+/* ======================================================
+   🛒 EDIT PRODUCT MODAL — DESKTOP / LARGE
+====================================================== */
+#productModal .modal-box{
+  width:92vw;
+  max-width:1000px;
+  height:88vh;
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  gap:20px;
+  padding:22px;
+}
+
+/* ======================================================
+   🛒 EDIT PRODUCT MODAL — MOBILE SAFE
+====================================================== */
+@media (max-width:600px){
+  #productModal .modal-box{
+    width:94vw;
+    height:90vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  #productModal .product-list{
+    border-right:none;
+    border-bottom:2px solid var(--border);
+    max-height:40vh;
+    overflow-y:auto;
+  }
+
+  #productModal .form{
+    overflow-y:auto;
+  }
+}
+/* ======================================================
+   🔥 EDIT PRODUCT MODAL — PHONE LANDSCAPE FIX
+   (treat phone landscape as compact desktop)
+====================================================== */
+@media (max-width:932px) and (orientation:landscape){
+
+  /* MODAL CONTAINER */
+  #productModal .modal-box{
+    width:96vw;
+    height:92vh;
+    max-width:96vw;
+    max-height:92vh;
+
+    display:grid;
+    grid-template-columns:1fr 1fr; /* 👈 two columns */
+    gap:14px;
+
+    padding:14px;
+    border-radius:18px;
+  }
+
+  /* PRODUCT LIST (LEFT) */
+  #productModal .product-list{
+    max-height:calc(92vh - 40px);
+    overflow-y:auto;
+    padding-right:6px;
+    border-right:2px solid var(--border);
+  }
+
+  /* FORM (RIGHT) */
+  #productModal .form{
+    max-height:calc(92vh - 40px);
+    overflow-y:auto;
+    padding-left:4px;
+  }
+
+  /* PRODUCT ITEM COMPACT */
+  #productModal .product-item{
+    padding:10px;
+    gap:10px;
+  }
+
+  #productModal .product-item img{
+    width:56px;
+    height:56px;
+    border-radius:10px;
+  }
+
+  /* FORM INPUTS COMPACT */
+  #productModal .form h2{
+    font-size:18px;
+  }
+
+  #productModal .form input{
+    padding:12px;
+    font-size:14px;
+  }
+
+  /* ACTION BUTTONS */
+  #productModal .actions{
+    gap:10px;
+  }
+
+  #productModal .save-btn,
+  #productModal .close-btn{
+    padding:14px;
+    font-size:16px;
+    border-radius:14px;
+  }
+}
+/* ======================================================
+   🔥 NO IMAGE → CENTER NAME ONLY
+   PRICE BUTTON STAYS NORMAL
+====================================================== */
+
+/* CARD WITHOUT IMAGE */
+.menu-card:not(:has(img)){
+  display:flex;
+  flex-direction:column;
+  justify-content:center;   /* vertical center */
+  align-items:stretch;      /* 🔥 IMPORTANT: do NOT center children */
+  padding-top:38px;         /* space for stock badge */
+}
+
+/* CENTER PRODUCT NAME ONLY */
+.menu-card:not(:has(img)) .menu-name{
+  text-align:center;
+  align-self:center;        /* 👈 name lang ang centered */
+  margin:12px 0;
+  font-weight:900;
+  line-height:1.2;
+
+  font-size:clamp(14px, 3.5vw, 18px);
+
+  white-space:normal;
+  word-break:break-word;
+
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
+
+/* PRICE BUTTON — EXACT SAME LOOK AS NORMAL */
+.menu-card:not(:has(img)) .price-btn{
+  align-self:stretch;       /* 👈 full width like before */
+  margin-top:auto;          /* stays at bottom */
+}
+/* ======================================================
+   🔥 NO IMAGE → COMPACT CARD
+   Badge + Name + Price dikit-dikit
+   Price button look stays SAME
+====================================================== */
+
+/* CARD WITHOUT IMAGE */
+.menu-card:not(:has(img)){
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;  /* ❌ no centering */
+  align-items:stretch;
+  padding:10px 10px 12px;      /* mas maliit na padding */
+  padding-top:28px;            /* space lang for badge */
+  gap:4px;                     /* 🔥 dikit-dikit */
+}
+
+/* STOCK BADGE — DIKIT SA TAAS */
+.menu-card:not(:has(img)) .stock-badge{
+  top:6px;
+  right:6px;
+  font-size:11px;
+  padding:4px 8px;
+}
+
+/* PRODUCT NAME — CENTERED BUT COMPACT */
+.menu-card:not(:has(img)) .menu-name{
+  align-self:center;
+  text-align:center;
+  margin:2px 0;                /* 🔥 dikit */
+  font-weight:900;
+  line-height:1.15;
+
+  font-size:clamp(13px, 3.4vw, 16px);
+
+  white-space:normal;
+  word-break:break-word;
+
+  /* max 2 lines lang */
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+
+  min-height:2.3em;
+}
+
+/* PRICE BUTTON — SAME LOOK, DIKIT SA NAME */
+.menu-card:not(:has(img)) .price-btn{
+  margin-top:4px;              /* 🔥 dikit */
+  align-self:stretch;          /* full width */
+}
+/* ======================================================
+   📱 PHONE LANDSCAPE — 4 PRODUCTS PER ROW
+   (NO IMAGE DISTORTION)
+====================================================== */
+@media (max-width:932px) and (orientation:landscape){
+
+  /* MENU GRID */
+  #menu{
+    grid-template-columns:repeat(4, 1fr); /* 🔥 4 per row */
+    gap:10px;
+  }
+
+  /* CARD */
+  .menu-card{
+    padding:8px;
+    border-radius:14px;
+  }
+
+  /* IMAGE — FIXED RATIO */
+  .menu-card img{
+    width:100%;
+    height:80px;          /* 👈 maliit pero proportional */
+    object-fit:cover;     /* 🔥 walang distortion */
+    border-radius:10px;
+    margin-bottom:4px;
+  }
+
+  /* NAME */
+  .menu-name{
+    font-size:12px;
+    line-height:1.15;
+    margin:2px 0 4px;
+
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  /* PRICE BUTTON — SAME LOOK */
+  .price-btn{
+    padding:8px;
+    font-size:16px;
+    border-radius:12px;
+  }
+
+  /* STOCK BADGE */
+  .stock-badge{
+    font-size:9px;
+    padding:3px 6px;
+    top:4px;
+    right:4px;
+  }
+}
+/* ======================================================
+   📲 TABLET PORTRAIT — FIX IMAGE RATIO
+   (NO STRETCHING)
+====================================================== */
+@media (orientation:portrait) and (min-width:600px) and (max-width:1024px){
+
+  /* MENU GRID (2 PER ROW OK NA) */
+  #menu{
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+
+  /* IMAGE — CONSISTENT SIZE */
+  .menu-card img{
+    width:100%;
+    height:160px;        /* 👈 stable height */
+    object-fit:cover;    /* 🔥 key fix */
+    border-radius:16px;
+  }
+
+  /* CARD */
+  .menu-card{
+    padding:14px;
+    border-radius:20px;
+  }
+
+  /* NAME */
+  .menu-name{
+    font-size:16px;
+    line-height:1.2;
+    margin:6px 0 8px;
+    text-align:center;
+  }
+
+  /* PRICE BUTTON */
+  .price-btn{
+    font-size:20px;
+    padding:14px;
+    border-radius:18px;
+  }
+}
+.menu-card img{
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+/* ===============================
+   SALES SUMMARY — 5 CARDS ONE ROW
+=============================== */
+.sales-summary{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr); /* 🔥 5 equal cards */
+  gap:12px;
+  margin-bottom:18px;
+}
+
+/* SAME SIZE CARDS */
+.sales-summary .summary-card{
+  height:80px;
+  padding:10px;
+  border-radius:16px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+
+  overflow:hidden;
+}
+
+/* LABEL */
+.sales-summary .summary-card .label{
+  font-size:13px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* VALUE */
+.sales-summary .summary-card .value{
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+}
+
+/* MOBILE — STACK */
+@media (max-width:900px){
+  .sales-summary{
+    grid-template-columns:1fr;
+  }
+}
+/* ======================================================
+   💸 EXPENSE MODAL — FINAL RESPONSIVE FIX
+====================================================== */
+
+/* MODAL CONTAINER */
+#expenseModal{
+  z-index:4000;
+}
+
+/* MODAL BOX */
+#expenseModal .modal-box{
+  width:90%;
+  max-width:420px;
+  max-height:90vh;          /* 🔥 never overflow screen */
+  display:flex;
+  flex-direction:column;
+  padding:22px;
+}
+
+/* TITLE */
+#expenseModal h2{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:12px;
+  text-align:center;
+}
+
+/* INPUTS */
+#expenseModal input{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  border-radius:14px;
+  border:2px solid var(--border);
+  margin-bottom:10px;
+}
+
+/* ACTION BUTTONS */
+#expenseModal .actions{
+  display:flex;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+/* HR SEPARATOR */
+#expenseModal hr{
+  margin:10px 0;
+  border:none;
+  border-top:1px solid var(--border);
+}
+
+/* =========================
+   EXPENSE LIST (SCROLL AREA)
+========================= */
+#expenseList{
+  flex:1;                   /* 🔥 takes remaining space */
+  overflow-y:auto;          /* 🔥 scroll only list */
+  padding-right:4px;
+}
+
+/* INDIVIDUAL ENTRY */
+#expenseList .sales-entry{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
+}
+
+/* EMPTY / LOADING */
+#expenseList small{
+  display:block;
+  text-align:center;
+  opacity:.7;
+  padding:20px 0;
+}
+
+/* =========================
+   DARK MODE SAFE
+========================= */
+body.dark #expenseModal .modal-box{
+  background:linear-gradient(180deg,#1c1c1c,#111);
+}
+
+body.dark #expenseModal input{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+
+body.dark #expenseList .sales-entry{
+  border-bottom:1px solid #2e2e2e;
+}
+
+/* =========================
+   PHONE SMALL (≤ 360px)
+========================= */
+@media (max-width:360px){
+
+  #expenseModal .modal-box{
+    padding:18px;
+    max-height:92vh;
+  }
+
+  #expenseModal h2{
+    font-size:20px;
+  }
+
+  #expenseModal input{
+    padding:12px;
+    font-size:14px;
+  }
+
+  #expenseList .sales-entry{
+    font-size:13px;
+  }
+}
+
+/* =========================
+   PHONE LANDSCAPE
+========================= */
+@media (orientation:landscape) and (max-height:500px){
+
+  #expenseModal .modal-box{
+    max-height:88vh;
+  }
+}
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(6px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  z-index:5000; /* 🔥 ALWAYS ON TOP */
+}
+/* BASE MODALS */
+.modal{
+  z-index:3000;
+}
+
+/* SYSTEM PROMPTS — ALWAYS TOP */
+#systemModal{
+  z-index:6000;
+}
+/* ======================================================
+   💸 EXPENSE MODAL — PHONE LANDSCAPE (LIKE EDIT PRODUCT)
+====================================================== */
+@media (max-width:932px) and (orientation:landscape){
+
+  /* MODAL BOX */
+  #expenseModal .modal-box{
+    width:96vw;
+    height:92vh;
+    max-width:96vw;
+    max-height:92vh;
+
+    display:grid;
+    grid-template-columns:1fr 1fr; /* 🔥 2 columns */
+    gap:14px;
+
+    padding:14px;
+    border-radius:18px;
+  }
+
+  /* LEFT SIDE — FORM */
+  #expenseModal .modal-box > h2,
+  #expenseModal .modal-box > input,
+  #expenseModal .modal-box > .actions,
+  #expenseModal .modal-box > hr{
+    grid-column:1;
+  }
+
+  /* FORM INPUTS */
+  #expenseModal input{
+    font-size:14px;
+    padding:12px;
+  }
+
+  /* ACTION BUTTONS */
+  #expenseModal .actions{
+    gap:10px;
+  }
+
+  #expenseModal .save-btn,
+  #expenseModal .close-btn{
+    font-size:14px;
+    padding:12px;
+    border-radius:14px;
+  }
+
+  /* RIGHT SIDE — EXPENSE LIST */
+  #expenseList{
+    grid-column:2;
+    grid-row:1 / span 6;
+
+    max-height:calc(92vh - 40px);
+    overflow-y:auto;
+
+    padding-left:6px;
+    border-left:2px solid var(--border);
+  }
+
+  /* LIST ITEMS */
+  #expenseList .sales-entry{
+    font-size:13px;
+    padding:8px 0;
+  }
+
+  /* DELETE BUTTON COMPACT */
+  #expenseList .void-btn{
+    font-size:11px;
+    padding:4px 8px;
+  }
+}
+/* ======================================================
+   💰 COMMISSION MODAL — FORCE 1 COLUMN (ALL DEVICES)
+====================================================== */
+
+/* BASE — ALL SCREENS */
+#commissionModal .modal-box{
+  width:90%;
+  max-width:520px;
+  height:auto;
+  max-height:90vh;
+
+  display:flex !important;      /* 🔥 force flex */
+  flex-direction:column !important;
+
+  padding:22px;
+  text-align:left;
+}
+
+/* TITLE */
+#commissionModal h2{
+  text-align:center;
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:12px;
+}
+
+/* COMMISSION LIST — SCROLL SAFE */
+#commissionList{
+  flex:1;
+  overflow-y:auto;
+  padding-right:6px;
+}
+
+/* ENTRY FIX */
+#commissionList .sales-entry{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
+}
+
+/* ITEMS INSIDE ENTRY */
+#commissionList .sales-entry div:first-child{
+  flex:1;
+}
+
+/* TOTAL (TOP BLOCK) */
+#commissionList > div:first-child{
+  text-align:center;
+  font-weight:900;
+  font-size:18px;
+  margin-bottom:12px;
+}
+
+/* ACTION BUTTON */
+#commissionModal .actions{
+  margin-top:12px;
+}
+
+/* ===============================
+   TABLET LANDSCAPE
+=============================== */
+@media (orientation:landscape) and (max-width:1024px){
+
+  #commissionModal .modal-box{
+    width:92vw;
+    max-width:600px;
+    max-height:92vh;
+    padding:18px;
+  }
+}
+
+/* ===============================
+   PHONE (PORTRAIT + LANDSCAPE)
+=============================== */
+@media (max-width:600px){
+
+  #commissionModal .modal-box{
+    width:94vw;
+    max-width:94vw;
+    padding:16px;
+  }
+
+  #commissionList .sales-entry{
+    font-size:13px;
+  }
+}
+
+/* ===============================
+   DARK MODE SAFE
+=============================== */
+body.dark #commissionModal .modal-box{
+  background:linear-gradient(180deg,#1c1c1c,#111);
+}
+/* ======================================================
+   📅 EXPENSE MODAL — SMALL DATE PICKER (PHONE & TABLET)
+====================================================== */
+
+/* BASE — DESKTOP SAFE */
+#expenseModal input[type="date"]{
+  font-size:14px;
+  padding:8px 10px;
+  border-radius:10px;
+  max-width:180px;
+}
+
+/* 📱 PHONE (PORTRAIT + LANDSCAPE) */
+@media (max-width:600px){
+  #expenseModal input[type="date"]{
+    font-size:12px;
+    padding:6px 8px;
+    max-width:140px;
+  }
+}
+
+/* 📲 TABLET (PORTRAIT + LANDSCAPE) */
+@media (min-width:601px) and (max-width:1024px){
+  #expenseModal input[type="date"]{
+    font-size:13px;
+    padding:7px 9px;
+    max-width:160px;
+  }
+}
+
+/* 🌙 DARK MODE SAFE */
+body.dark #expenseModal input[type="date"]{
+  background:#1c1c1c;
+  color:#fff;
+  border-color:#2e2e2e;
+}
+#expenseModal input[type="date"]{
+  margin:0 auto 10px;
+  display:block;
+}

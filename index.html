@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS – Offline IndexedDB</title>
+
+<link rel="manifest" href="/amproduction-pos/manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-512.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+
+<link rel="stylesheet" href="css/style.css">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AMPRODUCTION POS">
+<meta name="theme-color" content="#28a745">
+
+<style>
+
+
+
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <b>AMPRODUCTION</b>
+  <!-- RIGHT SIDE -->
+  <div style="display:flex;align-items:center;gap:10px;">
+
+    <!-- 🔒 LOCK ADMIN (ADMIN ONLY) -->
+    <button
+      id="lockAdminBtn"
+      onclick="lockAdmin()"
+      data-admin
+      title="Lock Admin"
+      style="
+        background:none;
+        border:none;
+        font-size:20px;
+        cursor:pointer;
+        font-weight:900;
+      "
+    >
+      🔒
+    </button>
+  <div id="hamburger">☰</div>
+  <div id="dropdown">
+    <button onclick="toggleDark()">🌙 Dark Mode</button>
+    <button onclick="togglePin()">🔐 PIN Lock</button>
+    <button onclick="changePin()" data-admin>🔑 Change PIN</button>
+    <button onclick="openProductModal()" data-admin>✏️ Edit Product</button>
+    <button onclick="changeHeaderName()" data-admin>
+      🏷️ Change Header Name
+      </button>
+    <button onclick="restoreLastBackup()" data-admin>♻️ Restore Backup</button>
+    <button onclick="exportSalesByDate(getActiveDate())">
+      📤 Export Sales (Date)
+      </button>
+    <button
+      data-admin
+      onclick="document.getElementById('importSalesInput').click()">
+      📥 Import Sales (Date)
+      </button>
+  
+  </div>
+</header>
+
+<main>
+  <div class="menu-container">
+    <h3>MENU</h3><br>
+    <div id="menu"></div>
+  </div>
+
+  <div id="cart">
+    <h3>ORDER</h3>
+    <div id="cartItems"></div>
+    <div class="total-box">TOTAL ₱<span id="total">0</span></div>
+    <div class="order-info">
+  <div class="info-card cash">
+    <span class="label">CASH</span>
+    <span class="value">₱<span id="cash">0</span></span>
+  </div>
+
+  <div class="info-card change">
+    <span class="label">CHANGE</span>
+    <span class="value">₱<span id="change">0</span></span>
+  </div>
+
+  <div class="info-card qty">
+    <span class="label">QTY</span>
+    <span class="value"><span id="totalQty">0</span></span>
+  </div>
+</div>
+  
+    <div class="numpad">
+      <button onclick="num(1)">1</button>
+      <button onclick="num(2)">2</button>
+      <button onclick="num(3)">3</button>
+      <button onclick="num(4)">4</button>
+      <button onclick="num(5)">5</button>
+      <button onclick="num(6)">6</button>
+      <button onclick="num(7)">7</button>
+      <button onclick="num(8)">8</button>
+      <button onclick="num(9)">9</button>
+      <button onclick="clearCash()">CLR</button>
+      <button onclick="num(0)">0</button>
+      <button onclick="back()">⌫</button>
+    </div>
+
+    <button class="checkout-btn" onclick="checkout()">CHECKOUT</button>
+    <button class="cancel-btn" onclick="cancelOrder()">CANCEL ORDER</button>
+
+  </div>
+</main>
+
+<section class="sales-container">
+
+  <!-- TITLE -->
+  <h3 class="sales-title">SALES HISTORY</h3>
+
+  <!-- SUMMARY CARDS -->
+  <div class="sales-summary">
+
+  <div class="summary-card">
+    <div class="label">Today Sales</div>
+    <div class="value">₱<span id="todaySales">0</span></div>
+  </div>
+
+  <div class="summary-card" data-admin>
+    <div class="label">Monthly Sales</div>
+    <div class="value">₱<span id="monthlySales">0</span></div>
+  </div>
+
+  <div class="summary-card" data-admin
+     style="cursor:pointer"
+     onclick="openCommissionModal()">
+
+  <div class="label">Commission</div>
+  <div class="value">₱<span id="commissionSales">0</span></div>
+
+  </div>
+
+
+  <!-- 💸 EXPENSES TODAY -->
+  <div class="summary-card"data-admin
+     style="cursor:pointer"
+     onclick="openExpenseModal()">
+
+  <div class="label">Expenses Today</div>
+  <div class="value">₱<span id="expensesToday">0</span></div>
+
+  </div>
+
+  <!-- 📈 PROFIT TODAY -->
+  <div class="summary-card" data-admin>
+    <div class="label">Profit Today</div>
+    <div class="value">₱<span id="profitToday">0</span></div>
+  </div>
+
+</div>
+
+
+
+  <!-- CALENDAR (BETWEEN CARDS & SALES ENTRY) -->
+  <div class="sales-calendar">
+    <input type="date" id="salesDate">
+  </div>
+
+  <!-- ACTION -->
+  <div class="sales-actions">
+    <button class="void-btn" onclick="voidAllByDate()" data-admin>
+      VOID ALL
+    </button>
+  </div>
+
+  <!-- SALES ENTRY -->
+  <div id="salesHistory"></div>
+
+</section>
+
+
+
+
+<!-- EDIT PRODUCT MODAL -->
+<div class="modal" id="productModal">
+  <div class="modal-box">
+    <div class="product-list" id="productList"></div>
+    <div class="form">
+      <h2>Edit Product</h2>
+      <input id="pname" placeholder="Name">
+      <input id="pprice" type="number" placeholder="Price">
+      <input id="pcomm" type="number" placeholder="Commission">
+      <input id="pstock" type="number" placeholder="Stock">
+      <input id="pimg" type="file" accept="image/*">
+      <div class="actions">
+        <button class="save-btn" onclick="saveProduct()">SAVE</button>
+        <button class="close-btn" onclick="closeProductModal()">CLOSE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal" id="expenseModal">
+  <div class="modal-box">
+
+    <h2>💸 Expenses</h2>
+
+    <input id="expAmount" type="number" placeholder="Amount">
+    <input id="expDesc" type="text" placeholder="Description (optional)">
+    <input id="expDate" type="date">
+
+    <div class="actions">
+      <button class="save-btn" onclick="saveExpense()">ADD</button>
+      <button class="close-btn" onclick="closeExpenseModal()">CLOSE</button>
+    </div>
+
+    <hr style="margin:16px 0">
+
+    <div id="expenseList">
+      <small>No expenses</small>
+    </div>
+
+  </div>
+</div>
+
+<!-- COMMISSION MODAL -->
+<div class="modal" id="commissionModal">
+  <div class="modal-box">
+
+    <h2>💰 Commission Breakdown</h2>
+
+    <div id="commissionList">
+      <small>Loading...</small>
+    </div>
+
+    <div class="actions single">
+      <button class="close-btn" onclick="closeCommissionModal()">CLOSE</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- SYSTEM MODAL (ALERT / CONFIRM / PIN) -->
+<div class="modal" id="systemModal">
+  <div class="modal-box" id="systemModalBox"></div>
+</div>
+<!-- CHANGE PIN MODAL (UNIFORM STYLE) -->
+<div class="modal" id="changePinModal">
+  <div class="modal-box">
+
+    <h2 id="cp-title">Change PIN</h2>
+
+    <input
+      id="cp-input"
+      type="password"
+      maxlength="6"
+      placeholder=""
+      inputmode="numeric"
+    >
+
+    <div class="actions">
+      <button class="save-btn" onclick="changePinNext()">OK</button>
+      <button class="close-btn" onclick="closeChangePin()">CANCEL</button>
+    </div>
+
+  </div>
+</div>
+
+
+
+<script>
+
+
+
+
+</script>
+
+<div id="pos-watermark">
+  Powered by AMPRODUCTION
+</div>
+<!-- 📥 IMPORT SALES INPUT (HIDDEN) -->
+<input
+  type="file"
+  id="importSalesInput"
+  accept=".json"
+  style="display:none"
+/>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
