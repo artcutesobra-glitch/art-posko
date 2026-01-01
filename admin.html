@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<h2>Loading…</h2>
+<h2>Checking access…</h2>
 
 <script>
 (async function(){
@@ -19,7 +19,7 @@
     return;
   }
 
-  // 🔐 device fingerprint (static-site safe)
+  // 🔐 device fingerprint
   const raw = navigator.userAgent +
               screen.width +
               screen.height +
@@ -37,25 +37,26 @@
   const lockKey = "posko_token_lock_" + token;
   const lockedDevice = localStorage.getItem(lockKey);
 
-  // 🔓 First device
+  // 🔓 first open → lock + redirect
   if(!lockedDevice){
     localStorage.setItem(lockKey, deviceHash);
-    document.body.innerHTML = "✅ Admin access granted (locked to this device)";
+    window.location.href = "./?token=" + token;
     return;
   }
 
-  // ❌ Different device
+  // ❌ different device
   if(lockedDevice !== deviceHash){
     document.body.innerHTML =
       "⛔ This link is already locked to another device";
     return;
   }
 
-  // ✅ Same device reopen
-  document.body.innerHTML = "✅ Admin access (same device)";
+  // ✅ same device → redirect again
+  window.location.href = "./?token=" + token;
 
 })();
 </script>
 
 </body>
 </html>
+
