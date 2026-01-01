@@ -9,25 +9,25 @@ export default {
       return new Response("INVALID", { status: 400 });
     }
 
-    // ============================
-    // SAVE (FROM MASTER PHONE)
-    // ============================
+    /* =========================
+       SAVE (FROM MASTER PAGE)
+    ========================= */
     if (mode === "save") {
       if (!pin) {
         return new Response("NO PIN", { status: 400 });
       }
 
-      await env.DB.put(token, JSON.stringify({
-        pin,
-        used: false
-      }));
+      await env.DB.put(
+        token,
+        JSON.stringify({ pin, used: false })
+      );
 
       return new Response("SAVED", { status: 200 });
     }
 
-    // ============================
-    // VERIFY (FROM ANY DEVICE)
-    // ============================
+    /* =========================
+       VERIFY (FROM ADMIN PAGE)
+    ========================= */
     const data = await env.DB.get(token);
     if (!data) {
       return new Response("INVALID", { status: 403 });
@@ -43,10 +43,11 @@ export default {
       return new Response("WRONG PIN", { status: 403 });
     }
 
-    // mark as USED (ONE-TIME)
+    // 🔒 ONE-TIME: mark as used
     obj.used = true;
     await env.DB.put(token, JSON.stringify(obj));
 
     return new Response("OK", { status: 200 });
   }
 };
+
