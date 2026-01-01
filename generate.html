@@ -2,111 +2,177 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Generate Admin Link</title>
+<title>Generate Admin Access</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#111;
+  --border:#ddd;
+  --green:#28a745;
+  --red:#c40000;
+}
+
+*{
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+
 body{
-  font-family:system-ui;
-  background:#f2f2f2;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  margin:0;
   height:100vh;
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
+
 .card{
-  background:#fff;
-  padding:24px;
-  border-radius:14px;
+  background:var(--card);
   width:100%;
-  max-width:440px;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  max-width:460px;
+  padding:28px;
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.15);
 }
-.key{
+
+h1{
+  margin:0;
+  font-size:22px;
+  text-align:center;
+}
+
+p{
+  text-align:center;
+  color:#555;
+  font-size:14px;
+  margin:8px 0 20px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:var(--green);
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
+.section{
+  margin-top:20px;
+}
+
+.label{
+  font-size:13px;
+  color:#666;
+  margin-bottom:6px;
+}
+
+.box{
   background:#111;
   color:#fff;
   padding:12px;
-  border-radius:8px;
+  border-radius:10px;
+  font-size:13px;
   word-break:break-all;
-  margin-top:10px;
-  font-size:13px;
 }
+
 .pin{
-  font-size:26px;
-  font-weight:800;
+  font-size:28px;
   letter-spacing:6px;
-  margin-top:10px;
+  font-weight:800;
+  text-align:center;
+  margin-top:6px;
 }
-button{
-  width:100%;
-  margin-top:16px;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  background:#28a745;
-  color:#fff;
-  font-size:16px;
-}
+
 .note{
-  color:#c40000;
+  margin-top:16px;
   font-size:13px;
-  margin-top:10px;
+  color:var(--red);
+  text-align:center;
 }
 </style>
 </head>
+
 <body>
 
 <div class="card">
-  <h2>Generate One-Time Admin Access</h2>
-  <button onclick="generate()">Generate</button>
-  <div id="out"></div>
+  <h1>🔐 Generate Admin Access</h1>
+  <p>Creates a one-time admin link with a separate PIN</p>
+
+  <button onclick="generateAccess()">Generate Access</button>
+
+  <div id="result"></div>
 </div>
 
 <script>
 /* ===============================
-   ORIGINAL (MASTER) TOKEN
+   MASTER TOKEN (IKAW LANG MAY ALAM)
 =============================== */
 const MASTER_TOKEN = "MASTER123";
 
+/* ===============================
+   TOKEN CHECK
+=============================== */
 const params = new URLSearchParams(location.search);
 if(params.get("token") !== MASTER_TOKEN){
-  document.body.innerHTML = "⛔ INVALID MASTER TOKEN";
+  document.body.innerHTML = "<h2 style='text-align:center'>⛔ INVALID MASTER TOKEN</h2>";
+  throw new Error("Invalid master token");
 }
 
 /* ===============================
-   RANDOM GENERATORS
+   HELPERS
 =============================== */
-function randToken(len){
-  const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let o="";
-  for(let i=0;i<len;i++) o+=c[Math.floor(Math.random()*c.length)];
-  return o;
+function randomToken(len){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for(let i=0;i<len;i++){
+    out += chars[Math.floor(Math.random()*chars.length)];
+  }
+  return out;
 }
-function randPin(){
-  return Math.floor(1000 + Math.random()*9000);
+
+function randomPin(){
+  return Math.floor(1000 + Math.random() * 9000);
 }
 
 /* ===============================
    GENERATE ACCESS
 =============================== */
-function generate(){
-  const accessToken = randToken(24);
-  const pin = randPin();
+function generateAccess(){
+
+  const accessToken = randomToken(24);
+  const pin = randomPin();
+
+  // 🔐 save PIN locally (for admin page validation)
+  sessionStorage.setItem("pin_" + accessToken, pin);
 
   const adminLink =
     "https://artcutesobra-glitch.github.io/art-posko/admin.html" +
     "?token=" + accessToken;
 
-  document.getElementById("out").innerHTML = `
-    <p><b>ADMIN LINK</b></p>
-    <div class="key">${adminLink}</div>
+  document.getElementById("result").innerHTML = `
+    <div class="section">
+      <div class="label">ADMIN LINK (share this)</div>
+      <div class="box">${adminLink}</div>
+    </div>
 
-    <p style="margin-top:14px"><b>ADMIN PIN</b></p>
-    <div class="pin">${pin}</div>
+    <div class="section">
+      <div class="label">ADMIN PIN (DO NOT SHARE IN LINK)</div>
+      <div class="pin">${pin}</div>
+    </div>
 
     <div class="note">
       ⚠️ PIN is shown ONLY here.<br>
-      Do NOT share the PIN in the link.
+      Once used, the link becomes invalid.
     </div>
   `;
 }
