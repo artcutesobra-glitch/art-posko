@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Access</title>
+</head>
+<body>
+
+<h2>Loading…</h2>
+
+<script>
+(async function(){
+
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token");
+
+  if(!token){
+    document.body.innerHTML = "⛔ Invalid or missing token";
+    return;
+  }
+
+  // 🔐 device fingerprint (static-site safe)
+  const raw = navigator.userAgent +
+              screen.width +
+              screen.height +
+              navigator.language;
+
+  const buffer = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(raw)
+  );
+
+  const deviceHash = Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  const lockKey = "posko_token_lock_" + token;
+  const lockedDevice = localStorage.getItem(lockKey);
+
+  // 🔓 First device
+  if(!lockedDevice){
+    localStorage.setItem(lockKey, deviceHash);
+    document.body.innerHTML = "✅ Admin access granted (locked to this device)";
+    return;
+  }
+
+  // ❌ Different device
+  if(lockedDevice !== deviceHash){
+    document.body.innerHTML =
+      "⛔ This link is already locked to another device";
+    return;
+  }
+
+  // ✅ Same device reopen
+  document.body.innerHTML = "✅ Admin access (same device)";
+
+})();
+</script>
+
+</body>
+</html>
