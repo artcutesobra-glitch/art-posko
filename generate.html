@@ -1,37 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Checking Access</title>
+<meta charset="UTF-8">
+<title>Access Check</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  background:linear-gradient(135deg,#141e30,#243b55);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+}
+.card{
+  background:#0f172a;
+  padding:30px;
+  width:100%;
+  max-width:420px;
+  border-radius:12px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
+}
+.loader{
+  border:4px solid #334155;
+  border-top:4px solid #38bdf8;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  margin:20px auto;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{100%{transform:rotate(360deg)}}
+.success{color:#22c55e}
+.error{color:#f87171}
+</style>
 </head>
+
 <body>
 
-<h2>Checking access...</h2>
+<div class="card">
+  <h2 id="msg">🔓 Checking access…</h2>
+  <div class="loader"></div>
+</div>
 
 <script>
 const WORKER_URL = "https://one-time-invite.artcutesobra.workers.dev";
+const APP_URL = "https://artcutesobra-glitch.github.io/art-posko/";
 
-const token = new URLSearchParams(window.location.search).get("token");
+const token = new URLSearchParams(location.search).get("token");
 
-if (!token) {
-  document.body.innerHTML = "<h3>Invalid link</h3>";
-} else {
-  fetch(WORKER_URL + "/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token })
+if(!token){
+  document.getElementById("msg").innerHTML =
+    "<span class='error'>❌ Invalid link</span>";
+}else{
+  fetch(WORKER_URL + "/verify",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ token })
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      // 🔁 redirect sa app
-      window.location.href = "https://artcutesobra-glitch.github.io/art-posko/";
-    } else {
-      document.body.innerHTML = "<h3>❌ " + data.error + "</h3>";
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.success){
+      document.getElementById("msg").innerHTML =
+        "<span class='success'>✅ Access granted</span>";
+      setTimeout(()=>location.href=APP_URL,1200);
+    }else{
+      document.getElementById("msg").innerHTML =
+        "<span class='error'>❌ "+data.error+"</span>";
     }
   })
-  .catch(err => {
-    document.body.innerHTML = "<h3>ERROR: " + err.message + "</h3>";
+  .catch(()=>{
+    document.getElementById("msg").innerHTML =
+      "<span class='error'>❌ Connection error</span>";
   });
 }
 </script>
