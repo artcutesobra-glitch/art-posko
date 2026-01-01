@@ -1,49 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Generator</title>
+<meta charset="UTF-8">
+<title>Admin Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+}
+.card{
+  background:#111;
+  padding:25px;
+  width:100%;
+  max-width:420px;
+  border-radius:12px;
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
+}
+h2{text-align:center;margin-bottom:10px}
+h3{text-align:center;margin-bottom:20px;color:#7dd3fc}
+button{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:hover{opacity:.9}
+pre{
+  background:#000;
+  padding:12px;
+  border-radius:8px;
+  margin-top:15px;
+  white-space:pre-wrap;
+  word-break:break-all;
+}
+.error{color:#f87171;text-align:center}
+.small{text-align:center;font-size:13px;color:#aaa;margin-top:10px}
+</style>
 </head>
+
 <body>
 
-<h2 id="status">Checking access...</h2>
+<div class="card">
+  <h2>🔐 ADMIN ACCESS</h2>
+  <p id="status" class="small">Checking permission…</p>
 
-<div id="panel" style="display:none">
-  <h3>ADMIN GENERATOR</h3>
-  <button onclick="generate()">Generate One-Time Link</button>
-  <pre id="out"></pre>
+  <div id="panel" style="display:none">
+    <h3>One-Time Link Generator</h3>
+    <button onclick="generate()">Generate One-Time Link</button>
+    <pre id="out"></pre>
+  </div>
 </div>
 
 <script>
 const WORKER_URL = "https://one-time-invite.artcutesobra.workers.dev";
 const MASTER_TOKEN = "MASTER111";
 
-// 🔑 read token from URL
-const urlToken = new URLSearchParams(window.location.search).get("token");
+const urlToken = new URLSearchParams(location.search).get("token");
+const status = document.getElementById("status");
+const panel = document.getElementById("panel");
 
-if (urlToken !== MASTER_TOKEN) {
-  document.getElementById("status").innerText = "UNAUTHORIZED";
-} else {
-  document.getElementById("status").style.display = "none";
-  document.getElementById("panel").style.display = "block";
+if(urlToken !== MASTER_TOKEN){
+  status.innerHTML = "<span class='error'>❌ UNAUTHORIZED</span>";
+}else{
+  status.style.display="none";
+  panel.style.display="block";
 }
 
-async function generate() {
-  try {
-    const res = await fetch(WORKER_URL + "/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ masterToken: MASTER_TOKEN })
+async function generate(){
+  document.getElementById("out").textContent = "⏳ Generating…";
+
+  try{
+    const res = await fetch(WORKER_URL + "/generate",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ masterToken:MASTER_TOKEN })
     });
 
     const data = await res.json();
-
-    // 👉 DITO LALABAS ANG LINK
     document.getElementById("out").textContent =
-      data.link || JSON.stringify(data, null, 2);
+      data.link || JSON.stringify(data,null,2);
 
-  } catch (err) {
-    document.getElementById("out").textContent = "ERROR: " + err.message;
+  }catch(e){
+    document.getElementById("out").textContent = "❌ Failed to generate";
   }
 }
 </script>
