@@ -9,8 +9,8 @@ body{
   font-family:system-ui;
   background:#f2f2f2;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   height:100vh;
 }
 .card{
@@ -41,6 +41,11 @@ button{
   color:#fff;
   font-size:16px;
 }
+.note{
+  color:#c40000;
+  font-size:13px;
+  margin-top:10px;
+}
 </style>
 </head>
 <body>
@@ -53,7 +58,7 @@ button{
 
 <script>
 /* ===============================
-   MASTER TOKEN (FRONTEND ONLY)
+   MASTER TOKEN
 =============================== */
 const MASTER_TOKEN = "MASTER123";
 
@@ -63,7 +68,7 @@ if(params.get("token") !== MASTER_TOKEN){
 }
 
 /* ===============================
-   RANDOM GENERATORS
+   RANDOM TOKEN GENERATOR
 =============================== */
 function randToken(len){
   const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -72,29 +77,20 @@ function randToken(len){
   return o;
 }
 
-function randPin(){
-  return Math.floor(1000 + Math.random()*9000);
-}
-
-/* ===============================
-   GENERATE LINK
-=============================== */
 function generate(){
-  const accessToken = randToken(20);
-  const pin = randPin();
+  const accessToken = randToken(24);
 
   const link =
     "https://artcutesobra-glitch.github.io/art-posko/admin.html" +
-    "?token=" + accessToken +
-    "&pin=" + pin;
+    "?token=" + accessToken;
 
   document.getElementById("out").innerHTML = `
     <p><b>ADMIN LINK</b></p>
     <div class="key">${link}</div>
-    <p><b>PIN:</b> ${pin}</p>
-    <p style="color:#c40000">
-      ⚠️ One-time use only
-    </p>
+    <div class="note">
+      ⚠️ PIN is NOT shown here.<br>
+      Admin must enter PIN manually.
+    </div>
   `;
 }
 </script>
