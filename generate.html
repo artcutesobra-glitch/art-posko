@@ -1,31 +1,39 @@
 <!DOCTYPE html>
-<html lang="tl">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Checking Access</title>
+  <meta charset="UTF-8">
+  <title>Checking Access</title>
 </head>
 <body>
 
-<h2>🔓 Checking access...</h2>
+<h2>Checking access...</h2>
 
 <script>
 const WORKER_URL = "https://one-time-invite.artcutesobra.workers.dev";
 
-const token = new URLSearchParams(location.search).get("token");
+const token = new URLSearchParams(window.location.search).get("token");
 
-fetch(WORKER_URL + "/verify", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ token })
-})
-.then(res => res.json())
-.then(data => {
-  if (data.success) {
-    window.location.href = data.redirect;
-  } else {
-    document.body.innerHTML = "<h3>❌ " + data.error + "</h3>";
-  }
-});
+if (!token) {
+  document.body.innerHTML = "<h3>Invalid link</h3>";
+} else {
+  fetch(WORKER_URL + "/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // 🔁 redirect sa app
+      window.location.href = "https://artcutesobra-glitch.github.io/art-posko/";
+    } else {
+      document.body.innerHTML = "<h3>❌ " + data.error + "</h3>";
+    }
+  })
+  .catch(err => {
+    document.body.innerHTML = "<h3>ERROR: " + err.message + "</h3>";
+  });
+}
 </script>
 
 </body>
