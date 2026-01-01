@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Generate Admin Link</title>
@@ -18,7 +18,7 @@ body{
   padding:24px;
   border-radius:14px;
   width:100%;
-  max-width:420px;
+  max-width:440px;
   text-align:center;
   box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
@@ -28,8 +28,14 @@ body{
   padding:12px;
   border-radius:8px;
   word-break:break-all;
-  margin-top:12px;
+  margin-top:10px;
   font-size:13px;
+}
+.pin{
+  font-size:26px;
+  font-weight:800;
+  letter-spacing:6px;
+  margin-top:10px;
 }
 button{
   width:100%;
@@ -41,19 +47,24 @@ button{
   color:#fff;
   font-size:16px;
 }
+.note{
+  color:#c40000;
+  font-size:13px;
+  margin-top:10px;
+}
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>Generate One-Time Admin Link</h2>
+  <h2>Generate One-Time Admin Access</h2>
   <button onclick="generate()">Generate</button>
   <div id="out"></div>
 </div>
 
 <script>
 /* ===============================
-   MASTER TOKEN (FRONTEND ONLY)
+   ORIGINAL (MASTER) TOKEN
 =============================== */
 const MASTER_TOKEN = "MASTER123";
 
@@ -71,29 +82,32 @@ function randToken(len){
   for(let i=0;i<len;i++) o+=c[Math.floor(Math.random()*c.length)];
   return o;
 }
-
 function randPin(){
   return Math.floor(1000 + Math.random()*9000);
 }
 
 /* ===============================
-   GENERATE LINK
+   GENERATE ACCESS
 =============================== */
 function generate(){
-  const accessToken = randToken(20);
+  const accessToken = randToken(24);
   const pin = randPin();
 
-  const link =
+  const adminLink =
     "https://artcutesobra-glitch.github.io/art-posko/admin.html" +
     "?token=" + accessToken;
 
   document.getElementById("out").innerHTML = `
     <p><b>ADMIN LINK</b></p>
-    <div class="key">${link}</div>
-    <p><b>PIN:</b> ${pin}</p>
-    <p style="color:#c40000">
-      ⚠️ One-time use only
-    </p>
+    <div class="key">${adminLink}</div>
+
+    <p style="margin-top:14px"><b>ADMIN PIN</b></p>
+    <div class="pin">${pin}</div>
+
+    <div class="note">
+      ⚠️ PIN is shown ONLY here.<br>
+      Do NOT share the PIN in the link.
+    </div>
   `;
 }
 </script>
