@@ -6,83 +6,44 @@
 </head>
 <body>
 
-<h3>Checking admin access…</h3>
+<h3>Admin Access</h3>
+<p id="pinInfo"></p>
 
 <script>
-(async function(){
+(function(){
 
-  /* ===============================
-     CONFIG
-  =============================== */
-  const VALID_TOKEN = "BUGOY"; // 🔑 token sa link
-  const ADMIN_PIN   = "1111";     // 🔐 iisang PIN lang
-  const PIN_LOCK_KEY = "posko_pin_locked_device"; // huwag galawin
-
-  /* ===============================
-     TOKEN CHECK
-  =============================== */
+  // 🔑 TOKEN CHECK (pang-hide lang ng link)
   const params = new URLSearchParams(location.search);
   const token = params.get("token");
 
-  if(token !== VALID_TOKEN){
+  if(!token){
     document.body.innerHTML = "⛔ Invalid admin link";
     return;
   }
 
-  /* ===============================
-     DEVICE FINGERPRINT
-  =============================== */
-  const raw =
-    navigator.userAgent +
-    screen.width +
-    screen.height +
-    navigator.language;
+  // 🔢 GENERATE RANDOM 4-DIGIT PIN
+  const pin = Math.floor(1000 + Math.random() * 9000).toString();
 
-  const hashBuffer = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(raw)
-  );
+  // 💾 Save PIN for this session
+  sessionStorage.setItem("admin_pin", pin);
 
-  const deviceId = Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  // 📢 Show PIN to admin
+  document.getElementById("pinInfo").innerHTML =
+    "🔐 Your Admin PIN: <b>" + pin + "</b><br><br>" +
+    "Enter this PIN when prompted.";
 
-  const lockedDevice = localStorage.getItem(PIN_LOCK_KEY);
+  // ⏳ After 5 seconds, ask for PIN
+  setTimeout(() => {
+    const input = prompt("Enter Admin PIN:");
 
-  /* ===============================
-     FIRST DEVICE → LOCK PIN
-  =============================== */
-  if(!lockedDevice){
-    const pinInput = prompt("🔐 Enter Admin PIN:");
-    if(pinInput === null){
-      document.body.innerHTML = "⛔ PIN cancelled";
+    if(input !== sessionStorage.getItem("admin_pin")){
+      document.body.innerHTML = "⛔ Wrong PIN";
       return;
     }
 
-    if(pinInput.trim() !== ADMIN_PIN){
-      document.body.innerHTML = "⛔ WRONG PIN";
-      return;
-    }
-
-    // 🔒 lock PIN to this device
-    localStorage.setItem(PIN_LOCK_KEY, deviceId);
+    // ✅ Access granted
     window.location.href = "./index.html";
-    return;
-  }
-
-  /* ===============================
-     OTHER DEVICES → BLOCK
-  =============================== */
-  if(lockedDevice !== deviceId){
-    document.body.innerHTML =
-      "⛔ This PIN is already locked to another device";
-    return;
-  }
-
-  /* ===============================
-     SAME DEVICE → ALLOW
-  =============================== */
-  window.location.href = "./index.html";
+  }, 5000);
 
 })();
 </script>
