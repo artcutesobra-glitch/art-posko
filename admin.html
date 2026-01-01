@@ -1,60 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Admin Access</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
 
 <h3>Checking admin access…</h3>
 
 <script>
-(function () {
+(async function(){
 
   /* ===============================
-     CONFIG (IKAW LANG ANG BABAGUHIN)
+     CONFIG
   =============================== */
-
-  const VALID_TOKEN = "ADMIN123"; // 🔑 PALITAN MO ITO
-  const ADMIN_PIN  = "2468";      // 🔐 PALITAN MO ITO
-
-  const VERIFIED_KEY = "posko_admin_verified"; // huwag galawin
+  const VALID_TOKEN = "ADMIN123"; // 🔑 token sa link
+  const ADMIN_PIN   = "2468";     // 🔐 iisang PIN lang
+  const PIN_LOCK_KEY = "posko_pin_locked_device"; // huwag galawin
 
   /* ===============================
      TOKEN CHECK
   =============================== */
-
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(location.search);
   const token = params.get("token");
 
-  if (token !== VALID_TOKEN) {
+  if(token !== VALID_TOKEN){
     document.body.innerHTML = "⛔ Invalid admin link";
-    throw new Error("Invalid token");
+    return;
   }
 
   /* ===============================
-     PIN CHECK (PER DEVICE)
+     DEVICE FINGERPRINT
   =============================== */
+  const raw =
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    navigator.language;
 
-  const verified = localStorage.getItem(VERIFIED_KEY);
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(raw)
+  );
 
-  if (!verified) {
-    const pin = prompt("🔐 Enter Admin PIN:");
+  const deviceId = Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
 
-    if (pin !== ADMIN_PIN) {
-      document.body.innerHTML = "⛔ Wrong PIN";
-      throw new Error("Wrong PIN");
+  const lockedDevice = localStorage.getItem(PIN_LOCK_KEY);
+
+  /* ===============================
+     FIRST DEVICE → LOCK PIN
+  =============================== */
+  if(!lockedDevice){
+    const pinInput = prompt("🔐 Enter Admin PIN:");
+    if(pinInput === null){
+      document.body.innerHTML = "⛔ PIN cancelled";
+      return;
     }
 
-    // ✅ mark this device as admin-verified
-    localStorage.setItem(VERIFIED_KEY, "yes");
+    if(pinInput.trim() !== ADMIN_PIN){
+      document.body.innerHTML = "⛔ WRONG PIN";
+      return;
+    }
+
+    // 🔒 lock PIN to this device
+    localStorage.setItem(PIN_LOCK_KEY, deviceId);
+    window.location.href = "./index.html";
+    return;
   }
 
   /* ===============================
-     ACCESS GRANTED → OPEN APP
+     OTHER DEVICES → BLOCK
   =============================== */
+  if(lockedDevice !== deviceId){
+    document.body.innerHTML =
+      "⛔ This PIN is already locked to another device";
+    return;
+  }
 
+  /* ===============================
+     SAME DEVICE → ALLOW
+  =============================== */
   window.location.href = "./index.html";
 
 })();
