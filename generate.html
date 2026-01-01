@@ -1,63 +1,38 @@
 <!DOCTYPE html>
-<html lang="tl">
-<head>
-<meta charset="UTF-8">
-<title>Secure Access</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{font-family:Arial;background:#f2f2f2;padding:20px}
-.card{background:#fff;padding:20px;border-radius:8px;max-width:500px;margin:auto;text-align:center}
-input,button{width:100%;padding:12px;margin-top:10px}
-</style>
-</head>
+<html>
 <body>
+<h2>ENTER PIN</h2>
 
-<div class="card">
-  <h2 id="status">🔐 Enter PIN</h2>
+<input id="pin" type="password" placeholder="PIN">
+<button onclick="verify()">Verify</button>
 
-  <input id="pin" type="password" placeholder="Enter PIN">
-  <button onclick="verify()">Verify</button>
-</div>
+<p id="msg"></p>
 
 <script>
 const WORKER_URL = "https://one-time-invite.artcutesobra.workers.dev";
 const REPO_APP_URL = "https://art-posko.pages.dev";
 
-const params = new URLSearchParams(location.search);
-const token = params.get("token");
-const statusEl = document.getElementById("status");
-
-if(!token){
-  statusEl.innerText = "❌ Invalid link";
-}
+const token = new URLSearchParams(location.search).get("token");
 
 async function verify(){
   const pin = document.getElementById("pin").value;
-  if(!pin){
-    alert("PIN required");
-    return;
-  }
 
-  statusEl.innerText = "⏳ Verifying...";
-
-  const res = await fetch(`${WORKER_URL}/verify`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
+  const res = await fetch(WORKER_URL + "/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, pin })
   });
 
   const data = await res.json();
 
   if(data.success){
-    statusEl.innerText = "✅ Access granted";
-    setTimeout(()=>{
-      location.href = REPO_APP_URL;
-    },1000);
+    document.getElementById("msg").innerText = "ACCESS GRANTED";
+    setTimeout(()=>location.href = REPO_APP_URL,1000);
   }else{
-    statusEl.innerText = "❌ " + data.error;
+    document.getElementById("msg").innerText = data.error;
   }
 }
 </script>
-
 </body>
 </html>
+
