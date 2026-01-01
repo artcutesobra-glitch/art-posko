@@ -2,85 +2,172 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Access</title>
+<title>Admin Verification</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#111;
+  --border:#ddd;
+  --green:#28a745;
+  --red:#c40000;
+}
+
+*{
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+
 body{
-  font-family:system-ui;
-  background:#f2f2f2;
+  margin:0;
+  height:100vh;
+  background:var(--bg);
   display:flex;
   align-items:center;
   justify-content:center;
-  height:100vh;
 }
+
 .card{
-  background:#fff;
-  padding:24px;
-  border-radius:14px;
+  background:var(--card);
   width:100%;
-  max-width:380px;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  max-width:420px;
+  padding:28px;
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.15);
 }
+
+h1{
+  margin:0;
+  font-size:22px;
+  text-align:center;
+}
+
+p{
+  text-align:center;
+  color:#555;
+  font-size:14px;
+  margin:8px 0 20px;
+}
+
 input{
   width:100%;
-  padding:12px;
-  margin-top:12px;
-  font-size:16px;
+  padding:14px;
+  font-size:18px;
+  text-align:center;
+  letter-spacing:6px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  outline:none;
 }
+
+input:focus{
+  border-color:var(--green);
+}
+
 button{
   width:100%;
-  margin-top:14px;
-  padding:12px;
-  background:#28a745;
-  color:#fff;
+  margin-top:16px;
+  padding:14px;
   border:none;
+  border-radius:10px;
+  background:var(--green);
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
 }
+
+button:active{
+  transform:scale(.98);
+}
+
 .error{
-  color:#c40000;
-  margin-top:12px;
+  color:var(--red);
+  margin-top:14px;
+  font-size:14px;
+  text-align:center;
 }
 </style>
 </head>
+
 <body>
 
 <div class="card">
-  <h2>Admin Verification</h2>
-  <p>Enter the PIN provided by the master</p>
+  <h1>🔐 Admin Verification</h1>
+  <p>Enter the PIN provided by the master page</p>
 
-  <input id="pin" type="password" placeholder="Enter PIN">
-  <button onclick="verify()">Continue</button>
+  <input
+    id="pinInput"
+    type="password"
+    placeholder="ENTER PIN"
+    maxlength="8"
+  >
+
+  <button onclick="verifyAccess()">Continue</button>
 
   <div id="msg" class="error"></div>
 </div>
 
 <script>
-async function verify(){
+async function verifyAccess(){
 
   const params = new URLSearchParams(location.search);
   const token = params.get("token");
-  const pin   = document.getElementById("pin").value.trim();
+  const pin   = document.getElementById("pinInput").value.trim();
+  const msg   = document.getElementById("msg");
 
-  if(!token || !pin){
-    document.getElementById("msg").textContent =
-      "Missing token or PIN";
+  msg.textContent = "";
+
+  if(!token){
+    msg.textContent = "❌ Missing token in link";
     return;
   }
 
-  // 🔥 EXISTING BACKEND — HINDI GINAGALAW
-  const res = await fetch(
-    "https://YOUR-BACKEND-ENDPOINT/?token=" +
-    token + "&pin=" + pin
-  );
-
-  if(!res.ok){
-    document.getElementById("msg").textContent =
-      "⛔ Invalid or already used";
+  if(!pin){
+    msg.textContent = "❌ Please enter PIN";
     return;
   }
 
-  // ✅ FIRST & ONLY ACCESS
-  window.location.href = "./index.html";
+  /* =========================================
+     FRONTEND PIN CHECK (SESSION-BASED)
+     – must match generate.html
+  ========================================= */
+  const realPin = sessionStorage.getItem("pin_" + token);
+
+  if(!realPin){
+    msg.textContent =
+      "⛔ PIN session expired. Ask master to generate again.";
+    return;
+  }
+
+  if(pin !== realPin){
+    msg.textContent = "❌ Wrong PIN";
+    return;
+  }
+
+  /* =========================================
+     BACKEND CHECK (TOKEN ONLY)
+     – BACKEND IS UNTOUCHED
+  ========================================= */
+  try{
+    const res = await fetch(
+      "https://YOUR-BACKEND-ENDPOINT/?token=" + token
+    );
+
+    if(!res.ok){
+      msg.textContent =
+        "⛔ Link already used or invalid";
+      return;
+    }
+
+    // ✅ SUCCESS → OPEN APP
+    window.location.href = "./index.html";
+
+  }catch(err){
+    msg.textContent =
+      "❌ Network error. Please try again.";
+  }
 }
 </script>
 
