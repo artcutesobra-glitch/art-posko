@@ -9,8 +9,8 @@ body{
   font-family:system-ui;
   background:#f2f2f2;
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   height:100vh;
 }
 .card{
@@ -27,7 +27,6 @@ input{
   padding:12px;
   font-size:18px;
   text-align:center;
-  margin-top:10px;
 }
 button{
   width:100%;
@@ -47,14 +46,14 @@ button{
 
 <div class="card">
   <h2>Admin Access</h2>
-  <p>Enter PIN</p>
-  <input id="pin" type="password" placeholder="PIN">
+  <input id="pin" type="password" placeholder="ENTER PIN">
   <button onclick="verify()">Continue</button>
   <div id="msg" class="error"></div>
 </div>
 
 <script>
-const BACKEND_URL  = "https://one-time-admin.art-pos.workers.dev";
+/* 🔴 PALITAN ITO NG WORKER URL MO */
+const BACKEND_URL = "https://admin-token.artcutesobra.workers.dev";
 
 async function verify(){
   const token = new URLSearchParams(location.search).get("token");
@@ -70,8 +69,10 @@ async function verify(){
     `${BACKEND_URL}?token=${token}&pin=${pin}`
   );
 
-  if(!res.ok){
-    msg.textContent = "❌ Invalid / Used / Wrong PIN";
+  const text = await res.text();
+
+  if(text !== "OK"){
+    msg.textContent = text;
     return;
   }
 
@@ -82,4 +83,5 @@ async function verify(){
 
 </body>
 </html>
+
 
