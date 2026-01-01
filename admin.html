@@ -1,23 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Admin Access</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  font-family:system-ui;
+  background:#f2f2f2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+.card{
+  background:#fff;
+  padding:24px;
+  border-radius:14px;
+  width:100%;
+  max-width:380px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+input{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+  font-size:16px;
+}
+button{
+  width:100%;
+  margin-top:14px;
+  padding:12px;
+  background:#28a745;
+  color:#fff;
+  border:none;
+}
+.error{
+  color:#c40000;
+  margin-top:12px;
+}
+</style>
 </head>
 <body>
 
-<h2>Checking access…</h2>
+<div class="card">
+  <h2>Admin Verification</h2>
+  <p>Enter the PIN provided by the master</p>
+
+  <input id="pin" type="password" placeholder="Enter PIN">
+  <button onclick="verify()">Continue</button>
+
+  <div id="msg" class="error"></div>
+</div>
 
 <script>
-(async function(){
+async function verify(){
 
   const params = new URLSearchParams(location.search);
   const token = params.get("token");
-  const pin   = params.get("pin");
+  const pin   = document.getElementById("pin").value.trim();
 
   if(!token || !pin){
-    document.body.innerHTML = "⛔ Invalid link";
+    document.getElementById("msg").textContent =
+      "Missing token or PIN";
     return;
   }
 
@@ -28,15 +74,14 @@
   );
 
   if(!res.ok){
-    document.body.innerHTML =
-      "⛔ This link has already been used";
+    document.getElementById("msg").textContent =
+      "⛔ Invalid or already used";
     return;
   }
 
   // ✅ FIRST & ONLY ACCESS
   window.location.href = "./index.html";
-
-})();
+}
 </script>
 
 </body>
