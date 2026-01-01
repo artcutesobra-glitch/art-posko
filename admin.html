@@ -1,69 +1,32 @@
 <!DOCTYPE html>
-<html lang="tl">
-<head>
-<meta charset="UTF-8">
-<title>Admin – Master Generator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{font-family:Arial;background:#f2f2f2;padding:20px}
-.card{background:#fff;padding:20px;border-radius:8px;max-width:500px;margin:auto}
-input,button{width:100%;padding:12px;margin-top:10px}
-button{cursor:pointer}
-</style>
-</head>
+<html>
 <body>
+<h2>MASTER ADMIN</h2>
 
-<div class="card">
-  <h2>🔐 Admin – Master Access</h2>
+<input id="masterToken" placeholder="Master Token">
+<input id="masterPin" type="password" placeholder="Master PIN">
+<button onclick="generate()">Generate</button>
 
-  <input id="masterToken" placeholder="Master Token">
-  <input id="masterPin" type="password" placeholder="Master PIN">
-
-  <button onclick="generate()">Generate One-Time Link</button>
-
-  <div id="result"></div>
-</div>
+<pre id="out"></pre>
 
 <script>
 const WORKER_URL = "https://one-time-invite.artcutesobra.workers.dev";
-  
+
 async function generate(){
-  const token = document.getElementById("masterToken").value;
-  const pin = document.getElementById("masterPin").value;
-  const result = document.getElementById("result");
+  const masterToken = document.getElementById("masterToken").value;
+  const masterPin = document.getElementById("masterPin").value;
 
-  if(!token || !pin){
-    result.innerText = "❌ Master token at PIN required";
-    return;
-  }
+  const res = await fetch(WORKER_URL + "/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ masterToken, masterPin })
+  });
 
-  result.innerText = "⏳ Generating...";
-
-  try{
-    const res = await fetch(`${WORKER_URL}/generate`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ masterToken:token, masterPin:pin })
-    });
-
-    const data = await res.json();
-
-    if(data.error){
-      result.innerText = "❌ " + data.error;
-      return;
-    }
-
-    result.innerHTML = `
-      <p><b>One-Time Link:</b></p>
-      <input value="${data.link}" readonly onclick="this.select()">
-      <small>Send this link to user</small>
-    `;
-  }catch{
-    result.innerText = "❌ Error connecting to worker";
-  }
+  const data = await res.json();
+  document.getElementById("out").textContent = JSON.stringify(data, null, 2);
 }
 </script>
-
 </body>
 </html>
+
 
