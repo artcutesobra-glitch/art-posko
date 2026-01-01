@@ -4,92 +4,37 @@
 <meta charset="UTF-8">
 <title>Admin Access</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{
-  font-family:system-ui;
-  background:#f2f2f2;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.card{
-  background:#fff;
-  padding:24px;
-  border-radius:14px;
-  width:100%;
-  max-width:380px;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:12px;
-}
-button{
-  background:#28a745;
-  color:#fff;
-  border:none;
-}
-.error{color:#c40000;margin-top:12px;}
-</style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Admin Verification</h2>
-  <input id="pin" placeholder="Enter PIN">
-  <button onclick="unlock()">Continue</button>
-  <div id="msg" class="error"></div>
-</div>
+<h2>Checking access…</h2>
 
 <script>
 (async function(){
 
   const params = new URLSearchParams(location.search);
   const token = params.get("token");
-  const pinFromLink = params.get("pin");
+  const pin   = params.get("pin");
 
-  if(!token || !pinFromLink){
-    document.body.innerHTML = "⛔ Invalid admin link";
+  if(!token || !pin){
+    document.body.innerHTML = "⛔ Invalid link";
     return;
   }
 
-  const LOCK_KEY = "lock_"+token;
+  // 🔥 EXISTING BACKEND — HINDI GINAGALAW
+  const res = await fetch(
+    "https://YOUR-BACKEND-ENDPOINT/?token=" +
+    token + "&pin=" + pin
+  );
 
-  async function deviceId(){
-    const raw =
-      navigator.userAgent +
-      screen.width +
-      screen.height +
-      navigator.language;
-    const h = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(raw)
-    );
-    return Array.from(new Uint8Array(h))
-      .map(b=>b.toString(16).padStart(2,"0")).join("");
-  }
-
-  const id = await deviceId();
-  const locked = localStorage.getItem(LOCK_KEY);
-
-  if(locked && locked !== id){
-    document.body.innerHTML = "⛔ Locked to another device";
+  if(!res.ok){
+    document.body.innerHTML =
+      "⛔ This link has already been used";
     return;
   }
 
-  window.unlock = function(){
-    const input = document.getElementById("pin").value.trim();
-    if(input !== pinFromLink){
-      document.getElementById("msg").textContent = "❌ Wrong PIN";
-      return;
-    }
-
-    localStorage.setItem(LOCK_KEY,id);
-    window.location.href = "./index.html";
-  };
+  // ✅ FIRST & ONLY ACCESS
+  window.location.href = "./index.html";
 
 })();
 </script>
