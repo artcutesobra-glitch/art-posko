@@ -153,7 +153,8 @@ function generateAccess(){
   const pin = randomPin();
 
   // 🔐 save PIN locally (for admin page validation)
-  sessionStorage.setItem("pin_" + accessToken, pin);
+  localStorage.setItem("pin_" + accessToken, pin);
+
 
   const adminLink =
     "https://artcutesobra-glitch.github.io/art-posko/admin.html" +
