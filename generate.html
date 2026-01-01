@@ -23,19 +23,18 @@ body{
   box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
 .key{
-  font-weight:700;
-  font-size:14px;
-  word-break:break-all;
   background:#111;
   color:#fff;
   padding:12px;
   border-radius:8px;
+  word-break:break-all;
   margin-top:12px;
+  font-size:13px;
 }
 button{
+  width:100%;
   margin-top:16px;
   padding:12px;
-  width:100%;
   border:none;
   border-radius:8px;
   background:#28a745;
@@ -47,47 +46,57 @@ button{
 <body>
 
 <div class="card">
-  <h2>Generate Admin Link</h2>
+  <h2>Generate One-Time Admin Link</h2>
   <button onclick="generate()">Generate</button>
   <div id="out"></div>
 </div>
 
 <script>
-(function(){
+/* ===============================
+   MASTER TOKEN (FRONTEND ONLY)
+=============================== */
+const MASTER_TOKEN = "MASTER123";
 
-  const MASTER_TOKEN = "MASTER123"; // 🔐 ORIGINAL TOKEN
+const params = new URLSearchParams(location.search);
+if(params.get("token") !== MASTER_TOKEN){
+  document.body.innerHTML = "⛔ INVALID MASTER TOKEN";
+}
 
-  const params = new URLSearchParams(location.search);
-  if(params.get("token") !== MASTER_TOKEN){
-    document.body.innerHTML = "⛔ Invalid generator access";
-    return;
-  }
+/* ===============================
+   RANDOM GENERATORS
+=============================== */
+function randToken(len){
+  const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let o="";
+  for(let i=0;i<len;i++) o+=c[Math.floor(Math.random()*c.length)];
+  return o;
+}
 
-  function rand(len){
-    const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let o = "";
-    for(let i=0;i<len;i++) o+=c[Math.floor(Math.random()*c.length)];
-    return o;
-  }
+function randPin(){
+  return Math.floor(1000 + Math.random()*9000);
+}
 
-  window.generate = function(){
-    const accessToken = rand(16);
-    const pin = Math.floor(1000 + Math.random()*9000);
+/* ===============================
+   GENERATE LINK
+=============================== */
+function generate(){
+  const accessToken = randToken(20);
+  const pin = randPin();
 
-    const link =
-      location.origin +
-      location.pathname.replace("generate.html","admin.html") +
-      "?token=" + accessToken +
-      "&pin=" + pin;
+  const link =
+    "https://artcutesobra-glitch.github.io/art-posko/admin.html" +
+    "?token=" + accessToken +
+    "&pin=" + pin;
 
-    document.getElementById("out").innerHTML = `
-      <p><b>ADMIN LINK</b></p>
-      <div class="key">${link}</div>
-      <p><b>PIN:</b> ${pin}</p>
-    `;
-  };
-
-})();
+  document.getElementById("out").innerHTML = `
+    <p><b>ADMIN LINK</b></p>
+    <div class="key">${link}</div>
+    <p><b>PIN:</b> ${pin}</p>
+    <p style="color:#c40000">
+      ⚠️ One-time use only
+    </p>
+  `;
+}
 </script>
 
 </body>
