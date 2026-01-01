@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Admin Access</title>
-</head>
-<body>
 
-<h2>Checking access…</h2>
 
 <script>
 (async function(){
@@ -15,48 +7,45 @@
   const token = params.get("token");
 
   if(!token){
-    document.body.innerHTML = "⛔ Invalid or missing token";
-    return;
+    document.body.innerHTML = "⛔ Access denied";
+    throw new Error("No token");
   }
 
   // 🔐 device fingerprint
-  const raw = navigator.userAgent +
-              screen.width +
-              screen.height +
-              navigator.language;
+  const raw =
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    navigator.language;
 
-  const buffer = await crypto.subtle.digest(
+  const hashBuffer = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(raw)
   );
 
-  const deviceHash = Array.from(new Uint8Array(buffer))
+  const deviceId = Array.from(new Uint8Array(hashBuffer))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
 
-  const lockKey = "posko_token_lock_" + token;
-  const lockedDevice = localStorage.getItem(lockKey);
+  const lockKey = "posko_device_lock_" + token;
+  const locked = localStorage.getItem(lockKey);
 
-  // 🔓 first open → lock + redirect
-  if(!lockedDevice){
-    localStorage.setItem(lockKey, deviceHash);
-    window.location.href = "./?token=" + token;
+  // 🔓 first time → lock
+  if(!locked){
+    localStorage.setItem(lockKey, deviceId);
+    console.log("✅ Token locked to this device");
     return;
   }
 
-  // ❌ different device
-  if(lockedDevice !== deviceHash){
+  // ❌ ibang device
+  if(locked !== deviceId){
     document.body.innerHTML =
-      "⛔ This link is already locked to another device";
-    return;
+      "⛔ This token is already locked to another device";
+    throw new Error("Token used elsewhere");
   }
 
-  // ✅ same device → redirect again
-  window.location.href = "./?token=" + token;
+  // ✅ same device
+  console.log("✅ Same device access");
 
 })();
 </script>
-
-</body>
-</html>
-
