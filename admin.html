@@ -133,7 +133,8 @@ async function verifyAccess(){
      FRONTEND PIN CHECK (SESSION-BASED)
      – must match generate.html
   ========================================= */
-  const realPin = sessionStorage.getItem("pin_" + token);
+  const realPin = localStorage.getItem("pin_" + token);
+
 
   if(!realPin){
     msg.textContent =
