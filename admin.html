@@ -1,49 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Access</title>
+<meta charset="UTF-8">
+<title>Admin Access</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  font-family:system-ui;
+  background:#f2f2f2;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.card{
+  background:#fff;
+  padding:24px;
+  border-radius:14px;
+  width:100%;
+  max-width:380px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+}
+button{
+  background:#28a745;
+  color:#fff;
+  border:none;
+}
+.error{color:#c40000;margin-top:12px;}
+</style>
 </head>
 <body>
 
-<h3>Admin Access</h3>
-<p id="pinInfo"></p>
+<div class="card">
+  <h2>Admin Verification</h2>
+  <input id="pin" placeholder="Enter PIN">
+  <button onclick="unlock()">Continue</button>
+  <div id="msg" class="error"></div>
+</div>
 
 <script>
-(function(){
+(async function(){
 
-  // 🔑 TOKEN CHECK (pang-hide lang ng link)
   const params = new URLSearchParams(location.search);
   const token = params.get("token");
+  const pinFromLink = params.get("pin");
 
-  if(!token){
+  if(!token || !pinFromLink){
     document.body.innerHTML = "⛔ Invalid admin link";
     return;
   }
 
-  // 🔢 GENERATE RANDOM 4-DIGIT PIN
-  const pin = Math.floor(1000 + Math.random() * 9000).toString();
+  const LOCK_KEY = "lock_"+token;
 
-  // 💾 Save PIN for this session
-  sessionStorage.setItem("admin_pin", pin);
+  async function deviceId(){
+    const raw =
+      navigator.userAgent +
+      screen.width +
+      screen.height +
+      navigator.language;
+    const h = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(raw)
+    );
+    return Array.from(new Uint8Array(h))
+      .map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
 
-  // 📢 Show PIN to admin
-  document.getElementById("pinInfo").innerHTML =
-    "🔐 Your Admin PIN: <b>" + pin + "</b><br><br>" +
-    "Enter this PIN when prompted.";
+  const id = await deviceId();
+  const locked = localStorage.getItem(LOCK_KEY);
 
-  // ⏳ After 5 seconds, ask for PIN
-  setTimeout(() => {
-    const input = prompt("Enter Admin PIN:");
+  if(locked && locked !== id){
+    document.body.innerHTML = "⛔ Locked to another device";
+    return;
+  }
 
-    if(input !== sessionStorage.getItem("admin_pin")){
-      document.body.innerHTML = "⛔ Wrong PIN";
+  window.unlock = function(){
+    const input = document.getElementById("pin").value.trim();
+    if(input !== pinFromLink){
+      document.getElementById("msg").textContent = "❌ Wrong PIN";
       return;
     }
 
-    // ✅ Access granted
+    localStorage.setItem(LOCK_KEY,id);
     window.location.href = "./index.html";
-  }, 5000);
+  };
 
 })();
 </script>
