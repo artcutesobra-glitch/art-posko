@@ -1,58 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Admin Access</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
 
-<h2>Loading…</h2>
+<h3>Checking admin access…</h3>
 
 <script>
-(async function(){
+(function () {
 
-  const params = new URLSearchParams(location.search);
+  /* ===============================
+     CONFIG (IKAW LANG ANG BABAGUHIN)
+  =============================== */
+
+  const VALID_TOKEN = "ADMIN123"; // 🔑 PALITAN MO ITO
+  const ADMIN_PIN  = "2468";      // 🔐 PALITAN MO ITO
+
+  const VERIFIED_KEY = "posko_admin_verified"; // huwag galawin
+
+  /* ===============================
+     TOKEN CHECK
+  =============================== */
+
+  const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
 
-  if(!token){
-    document.body.innerHTML = "⛔ Invalid or missing token";
-    return;
+  if (token !== VALID_TOKEN) {
+    document.body.innerHTML = "⛔ Invalid admin link";
+    throw new Error("Invalid token");
   }
 
-  // 🔐 device fingerprint (static-site safe)
-  const raw = navigator.userAgent +
-              screen.width +
-              screen.height +
-              navigator.language;
+  /* ===============================
+     PIN CHECK (PER DEVICE)
+  =============================== */
 
-  const buffer = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(raw)
-  );
+  const verified = localStorage.getItem(VERIFIED_KEY);
 
-  const deviceHash = Array.from(new Uint8Array(buffer))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  if (!verified) {
+    const pin = prompt("🔐 Enter Admin PIN:");
 
-  const lockKey = "posko_token_lock_" + token;
-  const lockedDevice = localStorage.getItem(lockKey);
+    if (pin !== ADMIN_PIN) {
+      document.body.innerHTML = "⛔ Wrong PIN";
+      throw new Error("Wrong PIN");
+    }
 
-  // 🔓 First device
-  if(!lockedDevice){
-    localStorage.setItem(lockKey, deviceHash);
-    document.body.innerHTML = "✅ Admin access granted (locked to this device)";
-    return;
+    // ✅ mark this device as admin-verified
+    localStorage.setItem(VERIFIED_KEY, "yes");
   }
 
-  // ❌ Different device
-  if(lockedDevice !== deviceHash){
-    document.body.innerHTML =
-      "⛔ This link is already locked to another device";
-    return;
-  }
+  /* ===============================
+     ACCESS GRANTED → OPEN APP
+  =============================== */
 
-  // ✅ Same device reopen
-  document.body.innerHTML = "✅ Admin access (same device)";
+  window.location.href = "./index.html";
 
 })();
 </script>
