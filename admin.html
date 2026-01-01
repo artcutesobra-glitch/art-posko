@@ -1,32 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>MASTER ADMIN</title>
+</head>
 <body>
-<h2>MASTER ADMIN</h2>
 
-<input id="masterToken" placeholder="Master Token">
-<input id="masterPin" type="password" placeholder="Master PIN">
-<button onclick="generate()">Generate</button>
+<h2 id="status">🔐 Checking master access...</h2>
 
-<pre id="out"></pre>
+<div id="panel" style="display:none">
+  <h3>ADMIN GENERATOR</h3>
+  <button onclick="generate()">Generate One-Time Link</button>
+  <pre id="out"></pre>
+</div>
 
 <script>
 const WORKER_URL = "https://one-time-invite.artcutesobra.workers.dev";
+const MASTER_TOKEN = "MASTER111";
 
-async function generate(){
-  const masterToken = document.getElementById("masterToken").value;
-  const masterPin = document.getElementById("masterPin").value;
+// 🔑 token galing sa URL
+const urlToken = new URLSearchParams(location.search).get("token");
 
+if (urlToken !== MASTER_TOKEN) {
+  document.getElementById("status").innerText = "❌ Unauthorized";
+} else {
+  document.getElementById("status").style.display = "none";
+  document.getElementById("panel").style.display = "block";
+}
+
+async function generate() {
   const res = await fetch(WORKER_URL + "/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ masterToken, masterPin })
+    body: JSON.stringify({ masterToken: MASTER_TOKEN })
   });
 
   const data = await res.json();
-  document.getElementById("out").textContent = JSON.stringify(data, null, 2);
+  document.getElementById("out").textContent =
+    data.link || JSON.stringify(data, null, 2);
 }
 </script>
+
 </body>
 </html>
-
-
