@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Generate Admin Link</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  font-family:system-ui;
+  background:#f2f2f2;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.card{
+  background:#fff;
+  padding:24px;
+  border-radius:14px;
+  width:100%;
+  max-width:420px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+.key{
+  font-weight:700;
+  font-size:14px;
+  word-break:break-all;
+  background:#111;
+  color:#fff;
+  padding:12px;
+  border-radius:8px;
+  margin-top:12px;
+}
+button{
+  margin-top:16px;
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  background:#28a745;
+  color:#fff;
+  font-size:16px;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Generate Admin Link</h2>
+  <button onclick="generate()">Generate</button>
+  <div id="out"></div>
+</div>
+
+<script>
+(function(){
+
+  const MASTER_TOKEN = "MASTER123"; // 🔐 ORIGINAL TOKEN
+
+  const params = new URLSearchParams(location.search);
+  if(params.get("token") !== MASTER_TOKEN){
+    document.body.innerHTML = "⛔ Invalid generator access";
+    return;
+  }
+
+  function rand(len){
+    const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let o = "";
+    for(let i=0;i<len;i++) o+=c[Math.floor(Math.random()*c.length)];
+    return o;
+  }
+
+  window.generate = function(){
+    const accessToken = rand(16);
+    const pin = Math.floor(1000 + Math.random()*9000);
+
+    const link =
+      location.origin +
+      location.pathname.replace("generate.html","admin.html") +
+      "?token=" + accessToken +
+      "&pin=" + pin;
+
+    document.getElementById("out").innerHTML = `
+      <p><b>ADMIN LINK</b></p>
+      <div class="key">${link}</div>
+      <p><b>PIN:</b> ${pin}</p>
+    `;
+  };
+
+})();
+</script>
+
+</body>
+</html>
