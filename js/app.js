@@ -1,3 +1,9 @@
+function haptic(ms = 15){
+  if ("vibrate" in navigator) {
+    navigator.vibrate(ms);
+  }
+}
+
 //*js//
 /* =====================================================
    PH DATE (NO UTC DELAY)
@@ -422,14 +428,16 @@ function cancelOrder(){
   }
 
   showConfirm("Cancel current order?", ()=>{
-    // CLEAR CART
-    
-
-    resetOrder();
-
-
-    showAlert("❌ ORDER CANCELLED");
+  cart.forEach(i=>{
+    const p = products.find(x=>x.id===i.id);
+    if(p) p.stock += i.qty;
   });
+
+  resetOrder();
+  renderMenu();
+  showAlert("❌ ORDER CANCELLED");
+  });
+
 }
 
 
@@ -461,6 +469,11 @@ req.onupgradeneeded = e => {
     d.createObjectStore("expenses",{ keyPath:"id" });
   }
 
+};
+
+// 🔒 SAFETY GUARD
+req.onblocked = () => {
+  alert("❌ Please close other POS tabs or devices");
 };
 
 req.onsuccess=e=>{
@@ -710,45 +723,55 @@ function renderSales(list){
   /* ===============================
      TODAY SALES LIST
   =============================== */
-  list
-    .filter(s => s.dateOnly === d)
-    .reverse()
-    .forEach(s => {
+  const todaySalesList = list.filter(s => s.dateOnly === d);
+const totalToday = todaySalesList.length;
 
-      todayTotal += s.total;
-      commissionToday += s.commissionTotal || 0;
+todaySalesList
+  .slice()
+  .reverse()
+  .forEach((s, index) => {
 
-      const entry = document.createElement("div");
-      entry.className = "sales-entry";
+    todayTotal += s.total;
+    commissionToday += s.commissionTotal || 0;
 
-      entry.innerHTML = `
-        <div>
-          <b>${s.date}</b>
-          <div class="sales-items">
-            ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
-          </div>
+    const orderNo = totalToday - index; // 🔥 DAILY RESET NUMBER
+
+    const entry = document.createElement("div");
+    entry.className = "sales-entry";
+
+    entry.innerHTML = `
+      <div>
+        <b>#${orderNo} — ${s.date}</b>
+        <div class="sales-items">
+          ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
         </div>
-        <div>
-          <b>₱${s.total.toFixed(2)}</b><br>
-          <button class="void-btn" onclick="voidTransaction(${s.id})" data-admin>
-            VOID
-          </button>
-        </div>
-      `;
+      </div>
+      <div>
+        <b>₱${s.total.toFixed(2)}</b><br>
+        <button
+          class="void-btn"
+          onclick="voidTransaction(${s.id})"
+          data-admin>
+          VOID
+        </button>
+      </div>
+    `;
 
-      frag.appendChild(entry);
-    });
+    frag.appendChild(entry); // ✅ tama na
+  });
 
-  salesHistory.appendChild(frag);
+// 🔥 ITO ANG SUSI — ISANG BES LANG
+salesHistory.appendChild(frag);
+
+
 
   /* ===============================
      MONTHLY TOTAL
   =============================== */
-  list.forEach(s=>{
-    if(s.month === m){
-      monthTotal += s.total;
-    }
-  });
+  monthTotal = list
+  .filter(s => s.month === m)
+  .reduce((sum, s) => sum + s.total, 0);
+
 
   todaySales.textContent = todayTotal.toFixed(2);
   monthlySales.textContent = monthTotal.toFixed(2);
@@ -879,14 +902,17 @@ function resetOrder(){
   cart = [];
   cash = "0";
 
-  if(cartItems) cartItems.innerHTML = "";
-  if(total) total.textContent = "0";
-  if(cashEl) cashEl.textContent = "0";
-  if(change) change.textContent = "0";
-  if(totalQtyEl) totalQtyEl.textContent = "0";
+  cartItems.innerHTML = "";
+  total.textContent = "0";
+  cashEl.textContent = "0";
+  change.textContent = "0";
+  totalQtyEl.textContent = "0";
 
-  computeChange(); // 🔥 IMPORTANT
+  totalAmountCache = 0;   // 🔥 important for computeChange
+  updateNumpadState();
 }
+
+
 
 
 /* =====================================================
@@ -902,8 +928,13 @@ function renderMenu(){
 
     const imgURL = p.image ? URL.createObjectURL(p.image) : null;
 
-    const card = document.createElement("div");
-    card.className = "menu-card";
+   const card = document.createElement("div");
+card.className = "menu-card";
+
+if(p.stock <= 0){
+  card.classList.add("out");
+}
+
 
     card.innerHTML = `
       <span class="${cls}">${txt}</span>
@@ -927,12 +958,23 @@ function renderMenu(){
 
 
 function addToCart(id){
-  const p=products.find(x=>x.id===id);
-  if(!p||p.stock<=0) return;
-  const i=cart.find(x=>x.id===id);
-  i?i.qty++:cart.push({id:p.id,name:p.name,price:p.price,qty:1});
+  const p = products.find(x => x.id === id);
+
+  if(!p || p.stock <= 0){
+    showAlert("❌ Out of stock");
+    return;
+  }
+
+  p.stock--;
+
+  const i = cart.find(x => x.id === id);
+  i ? i.qty++ : cart.push({id:p.id,name:p.name,price:p.price,qty:1});
+
   renderCart();
+  renderMenu();
 }
+
+
 
 function renderCart(){
   cartItems.innerHTML = "";
@@ -954,21 +996,46 @@ function renderCart(){
       </div>`;
   });
 
-  total.textContent = totalAmount.toFixed(2);
+  totalAmountCache = totalAmount;   // 🔥 IMPORTANT
+total.textContent = totalAmount.toFixed(2);
+
 
   totalQtyEl.textContent = totalQty;
 
-  computeChange();
+   computeChange();
+  updateNumpadState(); // 🔥 ENABLE / DISABLE NUMPAD
 }
 
 
-function chg(id,d){
-  const i=cart.find(x=>x.id===id);
+
+function chg(id, d){
+  const i = cart.find(x => x.id === id);
   if(!i) return;
-  i.qty+=d;
-  if(i.qty<=0) cart=cart.filter(x=>x.id!==id);
+
+  const p = products.find(x => x.id === id);
+  if(!p) return;
+
+  // ➕ dagdag qty
+  if(d > 0){
+    if(p.stock <= 0) return; // walang stock
+    i.qty++;
+    p.stock--; // 🔥 bawas agad
+  }
+
+  // ➖ bawas qty
+  if(d < 0){
+    i.qty--;
+    p.stock++; // 🔥 balik agad
+  }
+
+  if(i.qty <= 0){
+    cart = cart.filter(x => x.id !== id);
+  }
+
   renderCart();
+  renderMenu(); // 🔥 update badge agad
 }
+
 
 /* =====================================================
    AUTO HIDE / SHOW ADMIN BUTTONS
@@ -992,34 +1059,63 @@ function updateRoleUI(){
 }
 
 
+
 /* =====================================================
    NUMPAD
 ===================================================== */
 function num(n){
+  if(cart.length === 0) return;
+
   if(cash === "0") cash = "";
-  if(cash.length >= 7) return;
   cash += n;
+
+  if(+cash > 999999){
+    cash = "999999";
+  }
+
   cashEl.textContent = cash;
   computeChange();
 }
 
+
+
 function clearCash(){
-  cash = "0";              // 🔥 DITO YON
+  if(cart.length === 0) return; // 🔒 BLOCK
+
+  cash = "0";
   cashEl.textContent = 0;
   computeChange();
 }
 
+
 function back(){
+  if(cart.length === 0) return; // 🔒 BLOCK
+
   cash = cash.slice(0,-1);
   if(cash === "") cash = "0";
   cashEl.textContent = cash;
   computeChange();
 }
 
+
 function computeChange(){
-  const t = Number(total.textContent) || 0;
   const c = Number(cash) || 0;
-  change.textContent = c >= t ? c - t : 0;
+  change.textContent =
+    c >= totalAmountCache
+      ? c - totalAmountCache
+      : 0;
+}
+
+
+function updateNumpadState(){
+  const disabled = cart.length === 0;
+
+  document
+    .querySelectorAll(".numpad button")
+    .forEach(btn=>{
+      btn.disabled = disabled;
+      btn.style.opacity = disabled ? .4 : 1;
+    });
 }
 
 
@@ -1050,12 +1146,9 @@ function checkout(){
     }
   }
 
-  // BAWAS STOCK
-  cart.forEach(i=>{
-    const p = products.find(x=>x.id===i.id);
-    p.stock -= i.qty;
-    saveProductDB(p);
-  });
+  // 🔥 save updated stock to DB
+  products.forEach(p => saveProductDB(p));
+
 
   saveSaleFromCart();
   resetOrder();
@@ -1423,15 +1516,34 @@ const profitTodayEl   = document.getElementById("profitToday");
 (function setTodayCalendar(){
   const today = getTodayPH();
   salesDate.value = today;
-  loadSales();
+  
 })();
+
+updateNumpadState();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/amproduction-pos/service-worker.js")
-      .then(() => console.log("✅ Service Worker registered"))
-      .catch(err => console.error("❌ SW failed:", err));
+
+    navigator.serviceWorker.register("/art-posko/service-worker.js");
+
+    document.addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn || btn.disabled) return;
+      haptic(15);
+    });
+
   });
 }
 
+
+// 🔒 HARD BLOCK DOUBLE TAP ZOOM (MOBILE)
+let lastTap = 0;
+
+document.addEventListener("touchend", e => {
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    e.preventDefault();
+  }
+  lastTap = now;
+}, { passive:false });
 
