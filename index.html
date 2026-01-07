@@ -169,11 +169,7 @@
 
   </div>
 
-  <!-- 📈 PROFIT TODAY -->
-  <div class="summary-card" data-admin>
-    <div class="label">Profit Today</div>
-    <div class="value">₱<span id="profitToday">0</span></div>
-  </div>
+  
 
 </div>
 
@@ -295,29 +291,47 @@
 
 <!-- 🧾 END OF DAY MODAL -->
 <div class="modal" id="eodModal">
-  <div class="modal-box" style="max-width:360px">
+  <div class="modal-box eod-box">
 
-    <h2 style="text-align:center">🧾 END OF DAY</h2>
-    <div id="eodDate"></div>
+    <!-- HEADER -->
+    <div class="eod-header center">
+  <h2>🧾 END OF DAY</h2>
+  <div id="eodDate" class="eod-date"></div>
+</div>
 
-    <hr>
 
-    <div id="eodSummary"></div>
+    <!-- CONTENT -->
+    <div class="eod-grid">
 
-    <hr>
-    <b>SALES BREAKDOWN</b>
-    <div id="eodItems"></div>
+      <!-- SUMMARY -->
+      <section class="eod-summary-card">
+        <h3>SUMMARY</h3>
+        <div id="eodSummary"></div>
+      </section>
 
-    <hr>
-    <b>UNSOLD INVENTORY</b>
-    <div id="eodInventory"></div>
+      <!-- SALES -->
+      <section>
+        <h3>SALES BREAKDOWN</h3>
+        <div class="eod-table" id="eodItems"></div>
+      </section>
 
-    <div class="actions single">
+      <!-- INVENTORY -->
+      <section class="full">
+        <h3>UNSOLD INVENTORY</h3>
+        <div class="eod-table" id="eodInventory"></div>
+      </section>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="eod-footer">
       <button class="close-btn" onclick="closeEODModal()">CLOSE</button>
     </div>
 
   </div>
 </div>
+
+
 
 
 <!-- SYSTEM MODAL (ALERT / CONFIRM / PIN) -->
