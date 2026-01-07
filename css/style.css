@@ -1,4 +1,3 @@
-
 /* ======================================================
    VARIABLES
 ====================================================== */
@@ -3729,6 +3728,28 @@ html, body {
 /* OPTIONAL BUT RECOMMENDED */
 button {
   touch-action: manipulation;
+}
+
+/* 🍎 iOS MODAL FIX */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.55);
+}
+
+.modal-box {
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS BODY FIX */
+body.modal-open {
+  overflow: visible !important;
 }
 
 
