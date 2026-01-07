@@ -448,6 +448,9 @@ function cancelOrder(){
 const DB="posDB", P="products", S="sales";
 let db, products=[], cart=[], cash="", editingId=null;
 
+// 🔥 ADD-ON ORDER (PAHABOL)
+let lastCompletedOrderGroupId = null;
+
 const req = indexedDB.open(DB, 7);
 req.onupgradeneeded = e => {
   const d = e.target.result;
@@ -592,47 +595,48 @@ function saveProductDB(p){
 /* =====================================================
    SALES SAVE
 ===================================================== */
-function saveSaleFromCart(){
+function saveSaleFromCart(orderGroupId = null){
 
-  const items = cart
-    .map(i => {
-      const p = products.find(p => p.id === i.id);
+  const items = cart.map(i=>{
+    const p = products.find(p=>p.id===i.id);
+    if(!p) return null;
 
-      // ❗ SAFETY CHECK
-      if (!p) {
-        console.warn("Missing product data for ID:", i.id);
-        return null;
-      }
+    return {
+      productId: p.id,
+      name: p.name,
+      qty: i.qty,
+      price: i.price,
+      retail: p.retail || 0,
+      commission: p.commission || 0
+    };
+  }).filter(Boolean);
 
-      return {
-  productId: p.id,
-  name: p.name,
-  qty: i.qty,
-  price: i.price,
-  retail: p.retail || 0,      // 🔥 SNAPSHOT NG PUHUNAN
-  commission: p.commission || 0
-};
+  const commissionTotal =
+    items.reduce((s,i)=>s + (i.qty*i.commission),0);
 
-    })
-    .filter(Boolean); // 🔥 alisin lahat ng null
+  const saleId = Date.now();
 
-  const commissionTotal = items.reduce(
-    (sum, i) => sum + (i.qty * i.commission),
-    0
-  );
+  const groupId =
+  lastCompletedOrderGroupId || ("GRP-" + Date.now());
 
-  db.transaction(S, "readwrite")
-    .objectStore(S)
-    .add({
-      id: Date.now(),
-      date: new Date().toLocaleString("en-PH"),
-dateOnly: getTodayPH(),
-month: getMonthPH(),
+lastCompletedOrderGroupId = groupId;
 
-      items,
-      total: +total.textContent,
-      commissionTotal
-    });
+db.transaction(S, "readwrite")
+  .objectStore(S)
+  .add({
+    id: Date.now(),
+    orderGroupId: groupId, // 🔥 IMPORTANT
+    date: new Date().toLocaleString("en-PH"),
+    dateOnly: getTodayPH(),
+    month: getMonthPH(),
+
+    items,
+    total: +total.textContent,
+    commissionTotal
+  });
+
+
+  return orderGroupId || saleId;
 }
 
 
@@ -740,6 +744,28 @@ function getExpensesByDate(date){
   });
 }
 
+function getRetailForItem(item){
+  // 1️⃣ kung may retail na sa sales snapshot
+  if(item.retail && item.retail > 0){
+    return item.retail;
+  }
+
+  // 2️⃣ try match by productId
+  let p = products.find(p => p.id === item.productId);
+
+  // 3️⃣ fallback: match by name (IMPORTED SAFE)
+  if(!p){
+    p = products.find(
+      p =>
+        p.name.trim().toLowerCase() ===
+        item.name.trim().toLowerCase()
+    );
+  }
+
+  return p?.retail || 0;
+}
+
+
 function openEODModal(){
   if(currentRole !== "admin"){
     showAlert("⛔ ADMIN ONLY");
@@ -763,59 +789,117 @@ function openEODModal(){
   ]).then(([sales, expenses])=>{
 
     let totalSales = 0;
-    let cogs = 0;
-    let expenseTotal = 0;
-    let items = {};
-    let inventoryHTML = "";
+let cogs = 0;
+let expenseTotal = 0;
+let commissionTotal = 0; // ✅ ADD THIS
+let itemMap = {};
+
+
+let inventoryHTML = "";
+let salesBreakdownTotal = 0;
+let inventoryTotal = 0;
+
 
     sales.forEach(s=>{
   totalSales += s.total;
+  commissionTotal += s.commissionTotal || 0;
 
   s.items.forEach(i=>{
-    let retail = i.retail;
+    const retail = getRetailForItem(i);
+    cogs += i.qty * retail;
 
-    // 🔥 FALLBACK PARA SA IMPORTED FILES
-    if(!retail || retail <= 0){
-      const p = products.find(p=>p.id === i.productId);
-      retail = p?.retail || 0;
+    if(!itemMap[i.name]){
+      itemMap[i.name] = { qty:0, sales:0 };
     }
 
-    cogs += i.qty * retail;
+    itemMap[i.name].qty   += i.qty;
+    itemMap[i.name].sales += i.qty * i.price;
+
+    // ✅ ADD THIS
+    salesBreakdownTotal += i.qty * i.price;
   });
 });
+
+
+
+
+
 
 
     expenses.forEach(e=> expenseTotal += e.amount);
 
     const gross = totalSales - cogs;
-    const net   = gross - expenseTotal;
+    const net =
+  totalSales
+  - cogs
+  - commissionTotal
+  - expenseTotal;
+
 
     products.forEach(p=>{
-      if(p.stock > 0){
-        inventoryHTML += `
-          <div>
-            ${p.name} x${p.stock}
-            <span style="float:right">
-              ₱${(p.stock*(p.retail||0)).toFixed(2)}
-            </span>
-          </div>
-        `;
-      }
-    });
+  if(p.stock > 0){
+    const value = p.stock * (p.retail || 0);
+    inventoryTotal += value;
+
+    inventoryHTML += `
+      <div>
+        ${p.name} x${p.stock}
+        <span style="float:right">
+          ₱${value.toFixed(2)}
+        </span>
+      </div>
+    `;
+  }
+});
+
 
     eodDate.innerHTML = `<b>Date:</b> ${date}`;
     eodSummary.innerHTML = `
-      <div>Sales: ₱${totalSales.toFixed(2)}</div>
-      <div>COGS: ₱${cogs.toFixed(2)}</div>
-      <div>Expenses: ₱${expenseTotal.toFixed(2)}</div>
-      <hr><b>NET: ₱${net.toFixed(2)}</b>
-    `;
-    eodItems.innerHTML = Object.entries(items).map(([n,v])=>`
-      <div>${n} x${v.qty}<span style="float:right">₱${v.total.toFixed(2)}</span></div>
-    `).join("");
+  <div>Sales: ₱${totalSales.toFixed(2)}</div>
+  <div>COGS: ₱${cogs.toFixed(2)}</div>
+  <div>Commission: ₱${commissionTotal.toFixed(2)}</div>
+  <div>Expenses: ₱${expenseTotal.toFixed(2)}</div>
+  <hr>
+  <b>NET PROFIT: ₱${net.toFixed(2)}</b>
+`;
 
-    eodInventory.innerHTML =
-      inventoryHTML || "<small>No remaining stock</small>";
+    eodItems.innerHTML = `
+  ${
+    Object.keys(itemMap).length
+      ? Object.entries(itemMap).map(([n,v])=>`
+          <div>
+            ${n} x${v.qty}
+            <span style="float:right">
+              ₱${v.sales.toFixed(2)}
+            </span>
+          </div>
+        `).join("")
+      : "<small>No sales</small>"
+  }
+
+  <hr>
+  <div style="font-weight:900">
+    TOTAL SALES:
+    <span style="float:right">
+      ₱${salesBreakdownTotal.toFixed(2)}
+    </span>
+  </div>
+`;
+
+
+
+    eodInventory.innerHTML = `
+  ${inventoryHTML || "<small>No remaining stock</small>"}
+
+  <hr>
+  <div style="font-weight:900">
+    TOTAL INVENTORY VALUE:
+    <span style="float:right">
+      ₱${inventoryTotal.toFixed(2)}
+    </span>
+  </div>
+`;
+
   });
 }
 
@@ -921,8 +1005,7 @@ if(db && db.objectStoreNames.contains("expenses")){
         - commissionToday
         - expensesToday;
 
-      profitTodayEl.textContent =
-        profit.toFixed(2);
+      
     };
 }else{
   // fallback safety
@@ -1290,7 +1373,9 @@ function finalizeCheckout(){
   products.forEach(p => saveProductDB(p));
 
   // SAVE SALE
-  saveSaleFromCart();
+  const lastOrderGroupId = saveSaleFromCart();
+lastCompletedOrderGroupId = lastOrderGroupId;
+
 
   // RESET UI
   resetOrder();
@@ -1301,6 +1386,10 @@ function finalizeCheckout(){
   showAlert("✅ ORDER COMPLETED");
 }
 
+const eodDate      = document.getElementById("eodDate");
+const eodSummary   = document.getElementById("eodSummary");
+const eodItems     = document.getElementById("eodItems");
+const eodInventory = document.getElementById("eodInventory");
 
 
 
@@ -1645,7 +1734,7 @@ const total = document.getElementById("total"),
 
 /* 💸 SALES SUMMARY – EXPENSES & PROFIT */
 const expensesTodayEl = document.getElementById("expensesToday");
-const profitTodayEl   = document.getElementById("profitToday");
+
 
 /* =====================================================
    DARK MODE PERSIST
