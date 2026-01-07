@@ -518,12 +518,15 @@ function renderProductList(){
 function editProduct(id){
   const p=products.find(x=>x.id===id);
   if(!p) return;
-  editingId=id;
-  pname.value=p.name;
-  pprice.value=p.price;
-  pcomm.value=p.commission||0;
-  pstock.value=p.stock;
+
+  editingId = id;
+  pname.value   = p.name;
+  pprice.value  = p.price;
+  pretail.value = p.retail || 0; // 🔥 RETAIL PRICE
+  pcomm.value   = p.commission || 0;
+  pstock.value  = p.stock;
 }
+
 
 function saveProduct(){
   if(!pname.value || !pprice.value){
@@ -536,13 +539,15 @@ function saveProduct(){
   const img=file?file:products.find(p=>p.id===editingId)?.image||null;
 
   saveProductDB({
-    id:editingId||Date.now(),
-    name:pname.value,
-    price:+pprice.value,
-    commission:+pcomm.value||0,
-    stock:+pstock.value||0,
-    image:img
-  });
+  id: editingId || Date.now(),
+  name: pname.value,
+  price: +pprice.value,        // selling price
+  retail: +pretail.value || 0, // 🔥 RETAIL PRICE (PUHUNAN)
+  commission: +pcomm.value || 0,
+  stock: +pstock.value || 0,
+  image: img
+});
+
 
   loadProducts();
   renderProductList();
@@ -561,13 +566,15 @@ function deleteProduct(id){
 
 
 function clearProductForm(){
-  editingId=null;
-  pname.value="";
-  pprice.value="";
-  pcomm.value="";
-  pstock.value="";
-  pimg.value="";
+  editingId = null;
+  pname.value = "";
+  pprice.value = "";
+  pretail.value = ""; // 🔥
+  pcomm.value = "";
+  pstock.value = "";
+  pimg.value = "";
 }
+
 
 /* =====================================================
    PRODUCTS
@@ -598,12 +605,14 @@ function saveSaleFromCart(){
       }
 
       return {
-        productId: p.id,
-        name: p.name,
-        qty: i.qty,
-        price: i.price,
-        commission: p.commission || 0
-      };
+  productId: p.id,
+  name: p.name,
+  qty: i.qty,
+  price: i.price,
+  retail: p.retail || 0,      // 🔥 SNAPSHOT NG PUHUNAN
+  commission: p.commission || 0
+};
+
     })
     .filter(Boolean); // 🔥 alisin lahat ng null
 
@@ -705,6 +714,30 @@ function loadSales(){
   db.transaction(S).objectStore(S).getAll().onsuccess=e=>{
     renderSales(e.target.result||[]);
   };
+}
+
+function getSalesByDate(date){
+  return new Promise(res=>{
+    db.transaction("sales")
+      .objectStore("sales")
+      .getAll().onsuccess = e=>{
+        res((e.target.result||[]).filter(s=>s.dateOnly===date));
+      };
+  });
+}
+
+function getExpensesByDate(date){
+  return new Promise(res=>{
+    if(!db.objectStoreNames.contains("expenses")){
+      res([]);
+      return;
+    }
+    db.transaction("expenses")
+      .objectStore("expenses")
+      .getAll().onsuccess = e=>{
+        res((e.target.result||[]).filter(x=>x.date===date));
+      };
+  });
 }
 
 
@@ -825,6 +858,81 @@ if(db && db.objectStoreNames.contains("expenses")){
   updateRoleUI();
 }
 
+function printEndOfDay(){
+  const date = getActiveDate();
+
+  Promise.all([
+    getSalesByDate(date),
+    getExpensesByDate(date)
+  ]).then(([sales, expenses])=>{
+
+    let totalSales = 0;
+    let cogs = 0;
+    let expenseTotal = 0;
+    let itemMap = {};
+    let inventoryHTML = "";
+
+    sales.forEach(s=>{
+      totalSales += s.total;
+      s.items.forEach(i=>{
+        cogs += i.qty * (i.retail || 0);
+
+        if(!itemMap[i.name]){
+          itemMap[i.name] = { qty:0, sales:0 };
+        }
+        itemMap[i.name].qty += i.qty;
+        itemMap[i.name].sales += i.qty * i.price;
+      });
+    });
+
+    expenses.forEach(e=> expenseTotal += e.amount);
+
+    const grossProfit = totalSales - cogs;
+    const netProfit   = grossProfit - expenseTotal;
+
+    products.forEach(p=>{
+      if(p.stock > 0){
+        inventoryHTML += `
+          <div>
+            ${p.name} x${p.stock}
+            <span style="float:right">
+              ₱${(p.stock * (p.retail||0)).toFixed(2)}
+            </span>
+          </div>
+        `;
+      }
+    });
+
+    document.getElementById("eodDate").innerHTML =
+      `<b>Date:</b> ${date}`;
+
+    document.getElementById("eodSummary").innerHTML = `
+      <div>Sales: <b>₱${totalSales.toFixed(2)}</b></div>
+      <div>COGS (Retail): ₱${cogs.toFixed(2)}</div>
+      <div>Gross Profit: ₱${grossProfit.toFixed(2)}</div>
+      <div>Expenses: ₱${expenseTotal.toFixed(2)}</div>
+      <hr>
+      <div style="font-size:14px">
+        <b>NET PROFIT: ₱${netProfit.toFixed(2)}</b>
+      </div>
+    `;
+
+    document.getElementById("eodItems").innerHTML =
+      Object.entries(itemMap).map(([name,x])=>`
+        <div>
+          ${name} x${x.qty}
+          <span style="float:right">
+            ₱${x.sales.toFixed(2)}
+          </span>
+        </div>
+      `).join("");
+
+    document.getElementById("eodInventory").innerHTML =
+      inventoryHTML || "<small>No remaining stock</small>";
+
+    openEODPrint();
+  });
+}
 
 
 
@@ -1635,4 +1743,18 @@ document.addEventListener("click", function unlockAudio(){
   document.removeEventListener("click", unlockAudio);
 },{ once:true });
 
+function openEODPrint(){
+  const html = document.getElementById("eodReport").innerHTML;
+
+  const w = window.open("", "", "width=400,height=600");
+  w.document.write(`
+    <html>
+    <head><title>EOD Report</title></head>
+    <body onload="window.print();window.close()">
+      ${html}
+    </body>
+    </html>
+  `);
+  w.document.close();
+}
 
