@@ -65,9 +65,10 @@
       🏷️ Change Header Name
       </button>
     <button onclick="restoreLastBackup()" data-admin>♻️ Restore Backup</button>
-    <button onclick="downloadEODasPDF()" data-admin>
-  📄 DOWNLOAD EOD (PDF)
+    <button onclick="openEODModal()" data-admin>
+  🧾 VIEW END OF DAY
 </button>
+
 
 
     <button onclick="exportSalesByDate(getActiveDate())">
@@ -291,6 +292,33 @@
 
   </div>
 </div>
+
+<!-- 🧾 END OF DAY MODAL -->
+<div class="modal" id="eodModal">
+  <div class="modal-box" style="max-width:360px">
+
+    <h2 style="text-align:center">🧾 END OF DAY</h2>
+    <div id="eodDate"></div>
+
+    <hr>
+
+    <div id="eodSummary"></div>
+
+    <hr>
+    <b>SALES BREAKDOWN</b>
+    <div id="eodItems"></div>
+
+    <hr>
+    <b>UNSOLD INVENTORY</b>
+    <div id="eodInventory"></div>
+
+    <div class="actions single">
+      <button class="close-btn" onclick="closeEODModal()">CLOSE</button>
+    </div>
+
+  </div>
+</div>
+
 
 <!-- SYSTEM MODAL (ALERT / CONFIRM / PIN) -->
 <div class="modal" id="systemModal">
