@@ -65,9 +65,10 @@
       🏷️ Change Header Name
       </button>
     <button onclick="restoreLastBackup()" data-admin>♻️ Restore Backup</button>
-    <button onclick="printEndOfDay()" data-admin>
-  🧾 END OF DAY REPORT
+    <button onclick="downloadEODasPDF()" data-admin>
+  📄 DOWNLOAD EOD (PDF)
 </button>
+
 
     <button onclick="exportSalesByDate(getActiveDate())">
       📤 Export Sales (Date)
@@ -337,32 +338,9 @@
   style="display:none"
 />
 
-<!-- 🧾 END OF DAY PRINT -->
-<div id="eodReport" style="display:none">
-  <div style="font-family:Arial;width:280px;font-size:12px">
-    <h2 style="text-align:center;margin:4px 0">
-      END OF DAY REPORT
-    </h2>
-
-    <div id="eodDate"></div>
-    <hr>
-
-    <div id="eodSummary"></div>
-
-    <hr>
-    <b>SALES BREAKDOWN</b>
-    <div id="eodItems"></div>
-
-    <hr>
-    <b>UNSOLD INVENTORY</b>
-    <div id="eodInventory"></div>
-
-    <hr>
-    <p style="text-align:center">— END —</p>
-  </div>
-</div>
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/app.js"></script>
 
 </body>
