@@ -1575,24 +1575,53 @@ document.addEventListener("touchend", e => {
 }, { passive:false });
 
 /* =====================================================
-   BUTTON SOUND ENGINE
+   ZERO-DELAY SOUND ENGINE
 ===================================================== */
-const SND = {
-  tap: new Audio("/art-posko/sounds/tap.mp3"),
-  click: new Audio("/art-posko/sounds/click.mp3"),
-  success: new Audio("/art-posko/sounds/success.mp3"),
-  error: new Audio("/art-posko/sounds/error.mp3")
+const SOUND_SRC = {
+  tap: "/art-posko/sounds/tap.mp3",
+  click: "/art-posko/sounds/click.mp3",
+  success: "/art-posko/sounds/success.mp3",
+  error: "/art-posko/sounds/error.mp3"
 };
 
-Object.values(SND).forEach(a=>{
+const SND = {};
+const SND_POOL = {};
+
+Object.keys(SOUND_SRC).forEach(key=>{
+  const a = new Audio(SOUND_SRC[key]);
   a.preload = "auto";
   a.volume = 0.7;
+  SND[key] = a;
+
+  // 🔥 pool for instant replay
+  SND_POOL[key] = [
+    a,
+    a.cloneNode(),
+    a.cloneNode()
+  ];
 });
 
 function playSound(type){
-  const s = SND[type];
-  if(!s) return;
-  s.currentTime = 0;
-  s.play().catch(()=>{});
+  const pool = SND_POOL[type];
+  if(!pool) return;
+
+  for(const a of pool){
+    if(a.paused){
+      a.currentTime = 0;
+      a.play().catch(()=>{});
+      break;
+    }
+  }
 }
+
+/* =====================================================
+   AUDIO UNLOCK (ZERO FIRST-TAP DELAY)
+===================================================== */
+document.addEventListener("click", function unlockAudio(){
+  Object.values(SND).forEach(a=>{
+    a.play().then(()=>a.pause()).catch(()=>{});
+  });
+  document.removeEventListener("click", unlockAudio);
+},{ once:true });
+
 
