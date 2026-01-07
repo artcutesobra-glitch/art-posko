@@ -769,16 +769,21 @@ function openEODModal(){
     let inventoryHTML = "";
 
     sales.forEach(s=>{
-      totalSales += s.total;
-      s.items.forEach(i=>{
-        cogs += i.qty * (i.retail || 0);
-        if(!items[i.name]){
-          items[i.name] = { qty:0, total:0 };
-        }
-        items[i.name].qty += i.qty;
-        items[i.name].total += i.qty * i.price;
-      });
-    });
+  totalSales += s.total;
+
+  s.items.forEach(i=>{
+    let retail = i.retail;
+
+    // 🔥 FALLBACK PARA SA IMPORTED FILES
+    if(!retail || retail <= 0){
+      const p = products.find(p=>p.id === i.productId);
+      retail = p?.retail || 0;
+    }
+
+    cogs += i.qty * retail;
+  });
+});
+
 
     expenses.forEach(e=> expenseTotal += e.amount);
 
