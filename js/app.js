@@ -1575,6 +1575,11 @@ document.addEventListener("touchend", e => {
 }, { passive:false });
 
 /* =====================================================
+   DEVICE DETECT
+===================================================== */
+const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+/* =====================================================
    ZERO-DELAY SOUND ENGINE
 ===================================================== */
 const SOUND_SRC = {
@@ -1602,6 +1607,8 @@ Object.keys(SOUND_SRC).forEach(key=>{
 });
 
 function playSound(type){
+  if(IS_IOS) return; // 🍎 iOS = SILENT MODE
+
   const pool = SND_POOL[type];
   if(!pool) return;
 
@@ -1614,13 +1621,17 @@ function playSound(type){
   }
 }
 
+
 /* =====================================================
    AUDIO UNLOCK (ZERO FIRST-TAP DELAY)
 ===================================================== */
 document.addEventListener("click", function unlockAudio(){
+  if(IS_IOS) return; // 🍎 iOS skip unlock
+
   Object.values(SND).forEach(a=>{
     a.play().then(()=>a.pause()).catch(()=>{});
   });
+
   document.removeEventListener("click", unlockAudio);
 },{ once:true });
 
