@@ -1125,11 +1125,32 @@ function updateNumpadState(){
 function checkout(){
 
   const t = +total.textContent;
+  const c = +cash;
 
-  if(cart.length === 0 || +cash < t){
+  if(cart.length === 0 || c < t){
+    playSound("error");
     showAlert("❌ Invalid checkout");
     return;
   }
+
+  playSound("click");
+
+  showConfirm(
+    `
+    <div style="text-align:center">
+      <h2>🧾 Confirm Checkout</h2>
+      <p>
+        <b>Total:</b> ₱${t.toFixed(2)}<br>
+        <b>Cash:</b> ₱${c.toFixed(2)}<br>
+        <b>Change:</b> ₱${(c - t).toFixed(2)}
+      </p>
+    </div>
+    `,
+    finalizeCheckout
+  );
+}
+
+function finalizeCheckout(){
 
   // 🔒 AUTO EXIT ADMIN MODE
   if(currentRole === "admin"){
@@ -1137,25 +1158,30 @@ function checkout(){
     updateRoleUI();
   }
 
-  // 🔥 STOCK VALIDATION
+  // 🔥 STOCK SAFETY CHECK
   for(const i of cart){
     const p = products.find(x => x.id === i.id);
-    if(!p || p.stock < i.qty){
-      showAlert(`❌ Insufficient stock for ${p.name}`);
+    if(!p){
+      showAlert("❌ Product error");
       return;
     }
   }
 
-  // 🔥 save updated stock to DB
+  // SAVE UPDATED STOCK
   products.forEach(p => saveProductDB(p));
 
-
+  // SAVE SALE
   saveSaleFromCart();
+
+  // RESET UI
   resetOrder();
   loadProducts();
   loadSales();
+  
+  playSound("success");
   showAlert("✅ ORDER COMPLETED");
 }
+
 
 
 
@@ -1529,6 +1555,7 @@ if ("serviceWorker" in navigator) {
     document.addEventListener("click", e => {
       const btn = e.target.closest("button");
       if (!btn || btn.disabled) return;
+      playSound("tap");
       haptic(15);
     });
 
@@ -1546,4 +1573,26 @@ document.addEventListener("touchend", e => {
   }
   lastTap = now;
 }, { passive:false });
+
+/* =====================================================
+   BUTTON SOUND ENGINE
+===================================================== */
+const SND = {
+  tap: new Audio("/art-posko/sounds/tap.mp3"),
+  click: new Audio("/art-posko/sounds/click.mp3"),
+  success: new Audio("/art-posko/sounds/success.mp3"),
+  error: new Audio("/art-posko/sounds/error.mp3")
+};
+
+Object.values(SND).forEach(a=>{
+  a.preload = "auto";
+  a.volume = 0.7;
+});
+
+function playSound(type){
+  const s = SND[type];
+  if(!s) return;
+  s.currentTime = 0;
+  s.play().catch(()=>{});
+}
 
