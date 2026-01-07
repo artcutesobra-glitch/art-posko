@@ -65,6 +65,10 @@
       🏷️ Change Header Name
       </button>
     <button onclick="restoreLastBackup()" data-admin>♻️ Restore Backup</button>
+    <button onclick="printEndOfDay()" data-admin>
+  🧾 END OF DAY REPORT
+</button>
+
     <button onclick="exportSalesByDate(getActiveDate())">
       📤 Export Sales (Date)
       </button>
@@ -194,16 +198,49 @@
 
 
 <!-- EDIT PRODUCT MODAL -->
+<!-- EDIT PRODUCT MODAL -->
 <div class="modal" id="productModal">
   <div class="modal-box">
     <div class="product-list" id="productList"></div>
     <div class="form">
       <h2>Edit Product</h2>
+
       <input id="pname" placeholder="Name">
-      <input id="pprice" type="number" placeholder="Price">
-      <input id="pcomm" type="number" placeholder="Commission">
-      <input id="pstock" type="number" placeholder="Stock">
-      <input id="pimg" type="file" accept="image/*">
+
+      <input
+        id="pprice"
+        type="number"
+        placeholder="Selling Price"
+      >
+
+      <!-- 🔥 RETAIL / COST PRICE (ADMIN ONLY) -->
+      <input
+        id="pretail"
+        type="number"
+        placeholder="Retail / Cost Price"
+        min="0"
+        step="0.01"
+        data-admin
+      >
+
+      <input
+        id="pcomm"
+        type="number"
+        placeholder="Commission"
+      >
+
+      <input
+        id="pstock"
+        type="number"
+        placeholder="Stock"
+      >
+
+      <input
+        id="pimg"
+        type="file"
+        accept="image/*"
+      >
+
       <div class="actions">
         <button class="save-btn" onclick="saveProduct()">SAVE</button>
         <button class="close-btn" onclick="closeProductModal()">CLOSE</button>
@@ -211,6 +248,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- EXPENSE MODAL -->
 <div class="modal" id="expenseModal">
@@ -298,6 +336,32 @@
   accept=".json"
   style="display:none"
 />
+
+<!-- 🧾 END OF DAY PRINT -->
+<div id="eodReport" style="display:none">
+  <div style="font-family:Arial;width:280px;font-size:12px">
+    <h2 style="text-align:center;margin:4px 0">
+      END OF DAY REPORT
+    </h2>
+
+    <div id="eodDate"></div>
+    <hr>
+
+    <div id="eodSummary"></div>
+
+    <hr>
+    <b>SALES BREAKDOWN</b>
+    <div id="eodItems"></div>
+
+    <hr>
+    <b>UNSOLD INVENTORY</b>
+    <div id="eodInventory"></div>
+
+    <hr>
+    <p style="text-align:center">— END —</p>
+  </div>
+</div>
+
 
 <script src="js/app.js"></script>
 
