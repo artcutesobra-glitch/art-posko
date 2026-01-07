@@ -3752,4 +3752,205 @@ body.modal-open {
   overflow: visible !important;
 }
 
+/* ==============================
+   EOD MODAL – PRO VERSION
+============================== */
+
+.eod-box{
+  width: 100%;
+  max-width: 1000px;
+  max-height: 92vh;
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.eod-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+body.dark .eod-header{
+  background: #121212;
+}
+
+.eod-header h2{
+  margin: 0;
+}
+
+.eod-header button{
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* DATE */
+.eod-date{
+  font-size: 13px;
+  opacity: .75;
+}
+
+/* CONTENT */
+.eod-grid{
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+/* DESKTOP */
+@media (min-width: 768px){
+  .eod-grid{
+    grid-template-columns: 1fr 1fr;
+  }
+  .eod-grid .full{
+    grid-column: span 2;
+  }
+}
+
+/* SECTION */
+.eod-grid section{
+  background: #f5f5f5;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+body.dark .eod-grid section{
+  background: #1e1e1e;
+}
+
+/* SUMMARY CARD */
+.eod-summary-card{
+  border: 2px solid #28a745;
+}
+
+.eod-summary-card b{
+  font-size: 18px;
+}
+
+/* TABLE STYLE */
+.eod-table div{
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #ccc;
+  font-size: 14px;
+}
+
+.eod-table div:last-child{
+  border-bottom: none;
+}
+
+/* TOTAL ROW */
+.eod-table .total{
+  font-weight: 900;
+  border-top: 2px solid #000;
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
+/* FOOTER */
+.eod-footer{
+  padding: 12px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+  background: #fff;
+}
+
+body.dark .eod-footer{
+  background: #121212;
+}
+.eod-header{
+  padding: 14px 16px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* CENTER MODE */
+.eod-header.center{
+  text-align: center;
+}
+body.dark .eod-header{
+  background: #121212;
+}
+
+/* ===============================
+   SALES SUMMARY – RESPONSIVE GRID
+================================ */
+.sales-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* EACH BOX */
+.summary-card {
+  background: #28a745;
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-height: 90px;
+}
+
+/* LABEL */
+.summary-card .label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+
+/* VALUE */
+.summary-card .value {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+/* ===============================
+   TABLET PORTRAIT TUNING
+================================ */
+@media (max-width: 900px) {
+  .sales-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===============================
+   PHONE PORTRAIT TUNING
+================================ */
+@media (max-width: 480px) {
+  .sales-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-card {
+    min-height: 80px;
+  }
+
+  .summary-card .value {
+    font-size: 18px;
+  }
+}
 
