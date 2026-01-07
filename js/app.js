@@ -746,6 +746,15 @@ function openEODModal(){
     return;
   }
 
+  const modal = document.getElementById("eodModal");
+  modal.style.display = "block";
+
+  requestAnimationFrame(()=>{
+    modal.style.display = "flex";
+  });
+
+  document.body.classList.add("modal-open");
+
   const date = getActiveDate();
 
   Promise.all([
@@ -759,13 +768,10 @@ function openEODModal(){
     let items = {};
     let inventoryHTML = "";
 
-    // SALES + COGS
     sales.forEach(s=>{
       totalSales += s.total;
-
       s.items.forEach(i=>{
         cogs += i.qty * (i.retail || 0);
-
         if(!items[i.name]){
           items[i.name] = { qty:0, total:0 };
         }
@@ -774,59 +780,40 @@ function openEODModal(){
       });
     });
 
-    // EXPENSES
     expenses.forEach(e=> expenseTotal += e.amount);
 
     const gross = totalSales - cogs;
     const net   = gross - expenseTotal;
 
-    // UNSOLD INVENTORY (RETAIL VALUE)
     products.forEach(p=>{
       if(p.stock > 0){
         inventoryHTML += `
           <div>
             ${p.name} x${p.stock}
             <span style="float:right">
-              ₱${(p.stock * (p.retail || 0)).toFixed(2)}
+              ₱${(p.stock*(p.retail||0)).toFixed(2)}
             </span>
           </div>
         `;
       }
     });
 
-    // RENDER
-    document.getElementById("eodDate").innerHTML =
-      `<b>Date:</b> ${date}`;
-
-    document.getElementById("eodSummary").innerHTML = `
-      <div>Sales: <b>₱${totalSales.toFixed(2)}</b></div>
-      <div>COGS (Retail): ₱${cogs.toFixed(2)}</div>
-      <div>Gross Profit: ₱${gross.toFixed(2)}</div>
+    eodDate.innerHTML = `<b>Date:</b> ${date}`;
+    eodSummary.innerHTML = `
+      <div>Sales: ₱${totalSales.toFixed(2)}</div>
+      <div>COGS: ₱${cogs.toFixed(2)}</div>
       <div>Expenses: ₱${expenseTotal.toFixed(2)}</div>
-      <hr>
-      <div style="font-size:15px">
-        <b>NET PROFIT: ₱${net.toFixed(2)}</b>
-      </div>
+      <hr><b>NET: ₱${net.toFixed(2)}</b>
     `;
+    eodItems.innerHTML = Object.entries(items).map(([n,v])=>`
+      <div>${n} x${v.qty}<span style="float:right">₱${v.total.toFixed(2)}</span></div>
+    `).join("");
 
-    document.getElementById("eodItems").innerHTML =
-      Object.entries(items).map(([n,v])=>`
-        <div>
-          ${n} x${v.qty}
-          <span style="float:right">
-            ₱${v.total.toFixed(2)}
-          </span>
-        </div>
-      `).join("");
-
-    document.getElementById("eodInventory").innerHTML =
+    eodInventory.innerHTML =
       inventoryHTML || "<small>No remaining stock</small>";
-
-    // SHOW MODAL
-    document.getElementById("eodModal").style.display = "flex";
-    document.body.classList.add("modal-open");
   });
 }
+
 
 function closeEODModal(){
   document.getElementById("eodModal").style.display = "none";
@@ -1696,7 +1683,10 @@ let lastTap = 0;
 document.addEventListener("touchend", e => {
   const now = Date.now();
   if (now - lastTap < 300) {
-    e.preventDefault();
+    // ❌ wag preventDefault sa iOS
+    if(!IS_IOS){
+      e.preventDefault();
+    }
   }
   lastTap = now;
 }, { passive:false });
@@ -1761,5 +1751,6 @@ document.addEventListener("click", function unlockAudio(){
 
   document.removeEventListener("click", unlockAudio);
 },{ once:true });
+
 
 
