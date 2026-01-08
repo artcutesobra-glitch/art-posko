@@ -1333,51 +1333,51 @@ todaySalesList
     entry.className = "sales-entry";
 
     entry.innerHTML = `
-  <div class="sales-swipe">
-
-    <div class="sales-main">
-      <b>
-        #${orderNo} — ${s.date}
-        ${
-          s.status === "unpaid"
-            ? `<span style="color:#ff5252;font-weight:900">
-                (UNPAID – ${s.customerName || "No name"})
-              </span>`
-            : ""
-        }
-      </b>
-
-      <div class="sales-items">
-        ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
-      </div>
-    </div>
-
-    <div class="sales-actions">
-      <b>₱${s.total.toFixed(2)}</b><br>
-
+  <div>
+    <b>
+      #${orderNo} — ${s.date}
       ${
         s.status === "unpaid"
-          ? `
-            <button
-              class="paid-btn"
-              onclick="resumeUnpaidOrderById(${s.id})">
-              ➕ ADD
-            </button>
-          `
-          : ""
+? `<span style="color:#ff5252;font-weight:900">
+    (UNPAID – ${s.customerName || "No name"})
+  </span>`
+: ''
+
       }
+    </b>
 
-      <button
-        class="void-btn"
-        onclick="voidTransaction(${s.id})"
-        data-admin>
-        VOID
-      </button>
+    <div class="sales-items">
+      ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
     </div>
+  </div>
 
+  <div>
+    <b>₱${s.total.toFixed(2)}</b><br>
+
+    ${
+  s.status === "unpaid"
+  ? `
+    <button
+      class="paid-btn"
+      onclick="resumeUnpaidOrderById(${s.id})">
+      ➕ ADD
+    </button>
+
+    
+  `
+  : ""
+}
+
+
+    <!-- 🔒 ADMIN ONLY -->
+    <button
+      class="void-btn"
+      onclick="voidTransaction(${s.id})"
+      data-admin>
+      VOID
+    </button>
   </div>
 `;
-
 
 
 
@@ -2425,36 +2425,62 @@ document.addEventListener("click", function unlockAudio(){
 
 
 /* ===============================
-   SALES SWIPE GESTURE (MOBILE)
+   SALES HISTORY DRAWER (SWIPE)
 =============================== */
-let swipeStartX = 0;
-let swipeStartY = 0;
+let shStartX = 0;
+let shStartY = 0;
 
+const salesHistory = document.getElementById("salesHistory");
+const shOverlay = document.getElementById("salesHistoryOverlay");
+
+// OPEN
+function openSalesHistory(){
+  salesHistory.classList.add("open");
+  shOverlay.classList.add("show");
+}
+
+// CLOSE
+function closeSalesHistory(){
+  salesHistory.classList.remove("open");
+  shOverlay.classList.remove("show");
+}
+
+// overlay click = close
+shOverlay.addEventListener("click", closeSalesHistory);
+
+// swipe from LEFT EDGE to OPEN
 document.addEventListener("touchstart", e=>{
-  const entry = e.target.closest(".sales-entry");
-  if(!entry) return;
-
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
+  if(e.touches[0].clientX > 30) return; // 👈 LEFT EDGE ONLY
+  shStartX = e.touches[0].clientX;
+  shStartY = e.touches[0].clientY;
 },{ passive:true });
 
 document.addEventListener("touchend", e=>{
-  const entry = e.target.closest(".sales-entry");
-  if(!entry) return;
+  const dx = e.changedTouches[0].clientX - shStartX;
+  const dy = Math.abs(e.changedTouches[0].clientY - shStartY);
 
-  const dx = e.changedTouches[0].clientX - swipeStartX;
-  const dy = Math.abs(e.changedTouches[0].clientY - swipeStartY);
-
-  // ignore vertical scroll
   if(dy > 40) return;
 
-  // swipe right → open
-  if(dx > 60){
-    entry.classList.add("open");
+  // 👉 OPEN
+  if(dx > 80){
+    openSalesHistory();
   }
+});
 
-  // swipe left → close
-  if(dx < -60){
-    entry.classList.remove("open");
+// swipe inside panel to CLOSE
+salesHistory.addEventListener("touchstart", e=>{
+  shStartX = e.touches[0].clientX;
+  shStartY = e.touches[0].clientY;
+},{ passive:true });
+
+salesHistory.addEventListener("touchend", e=>{
+  const dx = e.changedTouches[0].clientX - shStartX;
+  const dy = Math.abs(e.changedTouches[0].clientY - shStartY);
+
+  if(dy > 40) return;
+
+  // 👈 CLOSE
+  if(dx < -80){
+    closeSalesHistory();
   }
 });
