@@ -195,57 +195,105 @@
 
 
 
-<!-- EDIT PRODUCT MODAL -->
-<!-- EDIT PRODUCT MODAL -->
-<div class="modal" id="productModal">
-  <div class="modal-box">
-    <div class="product-list" id="productList"></div>
-    <div class="form">
-      <h2>Edit Product</h2>
+<!-- inventory -->
+<section id="productPage" class="page hidden inventory-page">
 
-      <input id="pname" placeholder="Name">
+  <header class="page-header">
 
-      <input
-        id="pprice"
-        type="number"
-        placeholder="Selling Price"
-      >
+  <button class="back-btn" onclick="closeProductPage()">←</button>
 
-      <!-- 🔥 RETAIL / COST PRICE (ADMIN ONLY) -->
-      <input
-        id="pretail"
-        type="number"
-        placeholder="Retail / Cost Price"
-        min="0"
-        step="0.01"
+  <!-- 📦 INVENTORY DROPDOWN -->
+  <div class="inv-title-wrap" onclick="toggleInventoryHeaderMenu()">
+    <h2>📦 INVENTORY ▾</h2>
+
+    <div id="inventoryHeaderMenu" class="inv-header-menu dropdown">
+
+      <button onclick="exportInventory('csv')">📤 Export CSV</button>
+      <button onclick="exportInventory('json')">📦 Export JSON</button>
+
+      <button
         data-admin
-      >
+        onclick="document.getElementById('importInventoryInput').click()">
+        📥 Import Inventory
+      </button>
+      <!-- 📥 IMPORT INVENTORY INPUT (HIDDEN) -->
+<input
+  type="file"
+  id="importInventoryInput"
+  accept=".json"
+  style="display:none"
+/>
 
-      <input
-        id="pcomm"
-        type="number"
-        placeholder="Commission"
-      >
-
-      <input
-        id="pstock"
-        type="number"
-        placeholder="Stock"
-      >
-
-      <input
-        id="pimg"
-        type="file"
-        accept="image/*"
-      >
-
-      <div class="actions">
-        <button class="save-btn" onclick="saveProduct()">SAVE</button>
-        <button class="close-btn" onclick="closeProductModal()">CLOSE</button>
-      </div>
+      
     </div>
   </div>
+
+</header>
+
+
+  <div class="inventory-toolbar">
+    <input
+      type="text"
+      placeholder="🔍 Search product..."
+      oninput="filterInventory(this.value)"
+    >
+
+    <button class="save-btn" onclick="newProduct()">ADD PRODUCT</button>
+  </div>
+
+  <div class="inventory-list" id="productList"></div>
+
+</section>
+
+<div class="modal" id="productEditorModal">
+  <div class="modal-box product-editor responsive">
+
+    <h2 id="productEditorTitle">Product Details</h2>
+
+    <div class="form-group">
+      <label>Product Name</label>
+      <input id="pname" type="text">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Selling Price (₱)</label>
+        <input id="pprice" type="number">
+      </div>
+
+      <div class="form-group" data-admin>
+        <label>Cost / Retail Price (₱)</label>
+        <input id="pretail" type="number">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Commission (₱)</label>
+        <input id="pcomm" type="number">
+      </div>
+
+      <div class="form-group">
+        <label>Stock Quantity</label>
+        <input id="pstock" type="number">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Product Image</label>
+      <input id="pimg" type="file" accept="image/*">
+    </div>
+
+    <div class="form-actions">
+      <button class="save-btn" onclick="saveProduct()">💾 Save</button>
+      <button class="void-btn" onclick="deleteProduct(editingId)">🗑 Delete</button>
+      <button class="close-btn" onclick="closeProductEditor()">CLOSE</button>
+    </div>
+
+  </div>
 </div>
+
+
 
 
 <!-- EXPENSE MODAL -->
