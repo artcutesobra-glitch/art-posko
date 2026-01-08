@@ -419,8 +419,6 @@ function changePinNext(){
 }
 
 
-
-
 function cancelOrder(){
   if(cart.length === 0){
     showAlert("ℹ️ No order to cancel");
@@ -428,28 +426,137 @@ function cancelOrder(){
   }
 
   showConfirm("Cancel current order?", ()=>{
-  cart.forEach(i=>{
-    const p = products.find(x=>x.id===i.id);
-    if(p) p.stock += i.qty;
-  });
 
-  resetOrder();
-  renderMenu();
-  showAlert("❌ ORDER CANCELLED");
-  });
+    // 🔥 RETURN STOCK ONLY IF NORMAL ORDER
+    if(!isResumedUnpaid){
+      cart.forEach(i=>{
+        const p = products.find(x=>x.id===i.id);
+        if(p){
+          p.stock += i.qty;
+          saveProductDB(p);
+        }
+      });
+    }
 
+    resetOrder();
+
+    unpaidBaseQty = {};
+    resumedUnpaidSale = null;
+    isResumedUnpaid = false;
+    lastCompletedOrderGroupId = null;
+
+    loadProducts();
+    showAlert("❌ ORDER CANCELLED");
+  });
 }
 
 
+
+function closeCheckout(){
+
+  // 🔥 ONLY RETURN STOCK IF NOT RESUMED UNPAID
+  if(!isResumedUnpaid){
+    cart.forEach(i=>{
+      const p = products.find(x=>x.id===i.id);
+      if(p){
+        p.stock += i.qty;
+        saveProductDB(p);
+      }
+    });
+  }
+
+  resetOrder();
+
+  unpaidBaseQty = {};
+  resumedUnpaidSale = null;
+  isResumedUnpaid = false;
+  lastCompletedOrderGroupId = null;
+
+  loadProducts();
+  closeModal();
+}
+
+
+
+function resumeUnpaidOrderById(id){
+  if(!db) return;
+
+  db.transaction("sales")
+    .objectStore("sales")
+    .get(id).onsuccess = e=>{
+      const sale = e.target.result;
+      if(sale){
+        resumeUnpaidOrder(sale);
+      }else{
+        showAlert("❌ Unpaid order not found");
+      }
+    };
+}
+
+
+function resumeUnpaidOrder(sale){
+  if(sale.status !== "unpaid") return;
+
+  resetOrder();
+  unpaidBaseQty = {};
+  isResumedUnpaid = true;
+
+  sale.items.forEach(i=>{
+    const p = products.find(x=>x.id===i.productId);
+    if(!p) return;
+
+    // 🔥 BAWAS STOCK BASED ON UNPAID QTY
+    p.stock -= i.qty;
+    saveProductDB(p);
+
+    cart.push({
+      id: i.productId,
+      name: i.name,
+      price: i.price,
+      qty: i.qty
+    });
+
+    unpaidBaseQty[i.productId] = i.qty;
+  });
+
+  lastCompletedOrderGroupId = sale.orderGroupId;
+  resumedUnpaidSale = sale;
+
+  renderCart();
+  renderMenu();
+
+  showAlert(`🧾 Resumed UNPAID order\n👤 ${sale.customerName || "No name"}`);
+}
+
+
+
+function resetCartOnly(){
+  cart = [];
+  cash = "0";
+
+  cartItems.innerHTML = "";
+  total.textContent = "0";
+  cashEl.textContent = "0";
+  change.textContent = "0";
+  totalQtyEl.textContent = "0";
+
+  totalAmountCache = 0;
+  updateNumpadState();
+}
 
 /* =====================================================
    DATABASE
 ===================================================== */
 const DB="posDB", P="products", S="sales";
 let db, products=[], cart=[], cash="", editingId=null;
-
+let unpaidBaseQty = {}; 
+// { productId: originalQty }
 // 🔥 ADD-ON ORDER (PAHABOL)
 let lastCompletedOrderGroupId = null;
+// 🔥 RESUME UNPAID ORDER STATE
+let resumedUnpaidSale = null;
+let isResumedUnpaid = false;
+let checkoutLocked = false;
 
 const req = indexedDB.open(DB, 7);
 req.onupgradeneeded = e => {
@@ -595,7 +702,8 @@ function saveProductDB(p){
 /* =====================================================
    SALES SAVE
 ===================================================== */
-function saveSaleFromCart(orderGroupId = null){
+function saveSaleFromCart(orderGroupId = null, status = "paid", customerName = ""){
+
 
   const items = cart.map(i=>{
     const p = products.find(p=>p.id===i.id);
@@ -614,29 +722,28 @@ function saveSaleFromCart(orderGroupId = null){
   const commissionTotal =
     items.reduce((s,i)=>s + (i.qty*i.commission),0);
 
-  const saleId = Date.now();
-
   const groupId =
-  lastCompletedOrderGroupId || ("GRP-" + Date.now());
+    lastCompletedOrderGroupId || ("GRP-" + Date.now());
 
-lastCompletedOrderGroupId = groupId;
+  lastCompletedOrderGroupId = groupId;
 
-db.transaction(S, "readwrite")
-  .objectStore(S)
-  .add({
-    id: Date.now(),
-    orderGroupId: groupId, // 🔥 IMPORTANT
-    date: new Date().toLocaleString("en-PH"),
-    dateOnly: getTodayPH(),
-    month: getMonthPH(),
+  db.transaction("sales","readwrite")
+    .objectStore("sales")
+    .add({
+  id: Date.now(),
+  orderGroupId: groupId,
+  date: new Date().toLocaleString("en-PH"),
+  dateOnly: getTodayPH(),
+  month: getMonthPH(),
+  items,
+  total: +total.textContent,
+  commissionTotal,
+  status,          // 🔥 PAID | UNPAID
+  customerName     // ✅ ITO ANG KULANG
+});
 
-    items,
-    total: +total.textContent,
-    commissionTotal
-  });
 
-
-  return orderGroupId || saleId;
+  return groupId;
 }
 
 
@@ -942,22 +1049,54 @@ todaySalesList
     entry.className = "sales-entry";
 
     entry.innerHTML = `
-      <div>
-        <b>#${orderNo} — ${s.date}</b>
-        <div class="sales-items">
-          ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
-        </div>
-      </div>
-      <div>
-        <b>₱${s.total.toFixed(2)}</b><br>
-        <button
-          class="void-btn"
-          onclick="voidTransaction(${s.id})"
-          data-admin>
-          VOID
-        </button>
-      </div>
-    `;
+  <div>
+    <b>
+      #${orderNo} — ${s.date}
+      ${
+        s.status === "unpaid"
+? `<span style="color:#ff5252;font-weight:900">
+    (UNPAID – ${s.customerName || "No name"})
+  </span>`
+: ''
+
+      }
+    </b>
+
+    <div class="sales-items">
+      ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
+    </div>
+  </div>
+
+  <div>
+    <b>₱${s.total.toFixed(2)}</b><br>
+
+    ${
+  s.status === "unpaid"
+  ? `
+    <button
+      class="paid-btn"
+      onclick="resumeUnpaidOrderById(${s.id})">
+      ➕ ADD
+    </button>
+
+    
+  `
+  : ""
+}
+
+
+    <!-- 🔒 ADMIN ONLY -->
+    <button
+      class="void-btn"
+      onclick="voidTransaction(${s.id})"
+      data-admin>
+      VOID
+    </button>
+  </div>
+`;
+
+
+
 
     frag.appendChild(entry); // ✅ tama na
   });
@@ -1015,8 +1154,7 @@ if(db && db.objectStoreNames.contains("expenses")){
     todayTotal
     - commissionToday;
 
-  profitTodayEl.textContent =
-    profit.toFixed(2);
+  
 }
 
 
@@ -1060,6 +1198,38 @@ function voidTransaction(id){
     tx.oncomplete=()=>{ loadProducts(); loadSales(); };
   });
 }
+
+function markSaleAsPaid(saleId){
+
+  const tx = db.transaction("sales","readwrite");
+  const store = tx.objectStore("sales");
+
+  store.get(saleId).onsuccess = e=>{
+    const sale = e.target.result;
+    if(!sale){
+      showAlert("❌ Sale not found");
+      return;
+    }
+
+    if(sale.status === "paid"){
+      showAlert("ℹ️ Already PAID");
+      return;
+    }
+
+    // 🔥 MARK AS PAID (NO STOCK TOUCH)
+    sale.status = "paid";
+    sale.paidAt = new Date().toLocaleString("en-PH");
+
+    store.put(sale);
+
+    tx.oncomplete = ()=>{
+      loadSales();
+      showAlert("✅ Order marked as PAID");
+    };
+  };
+}
+
+
 
 
 function voidAllByDate(){
@@ -1217,26 +1387,40 @@ function chg(id, d){
   const p = products.find(x => x.id === id);
   if(!p) return;
 
-  // ➕ dagdag qty
+  // ➕ ADD
   if(d > 0){
-    if(p.stock <= 0) return; // walang stock
+    if(p.stock <= 0) return;
     i.qty++;
-    p.stock--; // 🔥 bawas agad
+    p.stock--;
   }
 
-  // ➖ bawas qty
+  // ➖ MINUS
   if(d < 0){
-    i.qty--;
-    p.stock++; // 🔥 balik agad
+
+  // 🔒 BLOCK BELOW UNPAID BASE QTY
+  if(
+    isResumedUnpaid &&
+    i.qty <= unpaidBaseQty[i.id]
+  ){
+    showAlert("❌ Cannot reduce below unpaid quantity");
+    return;
   }
 
-  if(i.qty <= 0){
-    cart = cart.filter(x => x.id !== id);
-  }
+  i.qty--;
+  p.stock++;
+}
+
+
+  // ❌ REMOVE ITEM — ONLY IF NOT RESUMED UNPAID
+  if(i.qty <= 0 && !isResumedUnpaid){
+  cart = cart.filter(x => x.id !== id);
+}
+
 
   renderCart();
-  renderMenu(); // 🔥 update badge agad
+  renderMenu();
 }
+
 
 
 /* =====================================================
@@ -1258,6 +1442,7 @@ function updateRoleUI(){
     .forEach(btn=>{
       btn.style.display = isAdmin ? "inline-block" : "none";
     });
+
 }
 
 
@@ -1327,64 +1512,139 @@ function updateNumpadState(){
 function checkout(){
 
   const t = +total.textContent;
-  const c = +cash;
 
-  if(cart.length === 0 || c < t){
+  if(cart.length === 0){
     playSound("error");
-    showAlert("❌ Invalid checkout");
+    showAlert("❌ No items");
     return;
   }
 
-  playSound("click");
+  openModal(`
+  <div style="text-align:center">
+    <h2>🧾 Checkout</h2>
 
-  showConfirm(
-    `
-    <div style="text-align:center">
-      <h2>🧾 Confirm Checkout</h2>
-      <p>
-        <b>Total:</b> ₱${t.toFixed(2)}<br>
-        <b>Cash:</b> ₱${c.toFixed(2)}<br>
-        <b>Change:</b> ₱${(c - t).toFixed(2)}
-      </p>
+    <p>
+      <b>Total:</b> ₱${t.toFixed(2)}
+    </p>
+
+    <!-- 🔥 CUSTOMER NAME (UNPAID ONLY) -->
+    <input
+      id="customerNameInput"
+      type="text"
+      placeholder="Customer name (for UNPAID)"
+      style="
+        width:100%;
+        padding:10px;
+        margin:10px 0;
+        font-size:16px;
+      "
+    >
+
+    <div class="actions" style="gap:10px">
+      <button class="save-btn" onclick="finalizeCheckout('paid')">
+        ✅ PAID
+      </button>
+
+      <button class="close-btn" onclick="finalizeCheckout('unpaid')">
+        ⏳ UNPAID
+      </button>
     </div>
-    `,
-    finalizeCheckout
-  );
+
+    <div style="margin-top:12px">
+      <button
+        class="close-btn"
+        onclick="closeCheckout()"
+        style="width:100%">
+        ✖ CLOSE
+      </button>
+    </div>
+  </div>
+`);
+
+
 }
 
-function finalizeCheckout(){
 
-  // 🔒 AUTO EXIT ADMIN MODE
-  if(currentRole === "admin"){
-    currentRole = "cashier";
-    updateRoleUI();
-  }
+function finalizeCheckout(status = "paid"){
 
-  // 🔥 STOCK SAFETY CHECK
-  for(const i of cart){
-    const p = products.find(x => x.id === i.id);
-    if(!p){
-      showAlert("❌ Product error");
+  // 🔒 PREVENT DOUBLE TAP
+  if(checkoutLocked) return;
+  checkoutLocked = true;
+
+  try {
+
+    const t = +total.textContent;
+    const c = +cash;
+
+    // 💰 CASH CHECK (PAID ONLY)
+    if(status === "paid" && c < t){
+      showAlert("❌ Insufficient cash");
       return;
     }
+
+    // 🧾 CUSTOMER NAME (UNPAID ONLY)
+    let customerName = "";
+    if(status === "unpaid"){
+      const input = document.getElementById("customerNameInput");
+      customerName = input?.value.trim() || "";
+
+      if(!customerName){
+        showAlert("❌ Customer name required for UNPAID");
+        return;
+      }
+    }
+
+    // 🔒 AUTO EXIT ADMIN MODE
+    if(currentRole === "admin"){
+      currentRole = "cashier";
+      updateRoleUI();
+    }
+
+    // 🔥 SAVE UPDATED STOCK
+    products.forEach(p => saveProductDB(p));
+
+    // 🔥 SAVE SALE WITH STATUS + NAME
+    const groupId = resumedUnpaidSale
+      ? resumedUnpaidSale.orderGroupId
+      : null;
+
+    saveSaleFromCart(groupId, status, customerName);
+
+    // ✅ DELETE OLD UNPAID RECORD (ONCE)
+    if(isResumedUnpaid && resumedUnpaidSale){
+      db.transaction("sales","readwrite")
+        .objectStore("sales")
+        .delete(resumedUnpaidSale.id);
+    }
+
+    // 🔥 FINAL RESET (SINGLE SOURCE OF TRUTH)
+    resetOrder();
+
+    lastCompletedOrderGroupId = null;
+    unpaidBaseQty = {};
+    resumedUnpaidSale = null;
+    isResumedUnpaid = false;
+
+    loadProducts();
+    loadSales();
+
+    playSound("success");
+
+    showAlert(
+      status === "paid"
+        ? "✅ PAID ORDER COMPLETED"
+        : "⏳ UNPAID ORDER SAVED"
+    );
+
+  } finally {
+    // 🔓 ALWAYS UNLOCK (EVEN IF ERROR)
+    checkoutLocked = false;
   }
-
-  // SAVE UPDATED STOCK
-  products.forEach(p => saveProductDB(p));
-
-  // SAVE SALE
-  const lastOrderGroupId = saveSaleFromCart();
-lastCompletedOrderGroupId = lastOrderGroupId;
-
-
-  // RESET UI
-  resetOrder();
-  loadProducts();
-  loadSales();
-  
-  playSound("success");
-  showAlert("✅ ORDER COMPLETED");
 }
+
+
+
+
 
 const eodDate      = document.getElementById("eodDate");
 const eodSummary   = document.getElementById("eodSummary");
