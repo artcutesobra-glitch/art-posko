@@ -4898,3 +4898,19 @@ body.dark .inv-header-menu.dropdown button:hover{
     padding:14px;
   }
 }
+.sales-summary{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* 🔥 PAG CASHIER MODE (ADMIN BOXES HIDDEN) */
+body:not(.admin-mode) .sales-summary{
+  grid-template-columns: 1fr;
+}
+
+/* OPTIONAL — para siguradong full width */
+body:not(.admin-mode) .sales-summary .summary-card{
+  width: 100%;
+}
+
