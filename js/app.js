@@ -505,9 +505,7 @@ function resumeUnpaidOrder(sale){
     const p = products.find(x=>x.id===i.productId);
     if(!p) return;
 
-    // 🔥 BAWAS STOCK BASED ON UNPAID QTY
-    p.stock -= i.qty;
-    saveProductDB(p);
+    
 
     cart.push({
       id: i.productId,
@@ -1188,9 +1186,16 @@ function voidTransaction(id){
       ps.getAll().onsuccess=ev=>{
         const plist=ev.target.result;
         sale.items.forEach(it=>{
-          const p=plist.find(x=>x.id===it.productId);
-          if(p){ p.stock+=it.qty; ps.put(p); }
-        });
+  const p = plist.find(x=>x.id===it.productId);
+  if(!p) return;
+
+  // 🔥 RETURN STOCK ONLY IF PAID
+  if(sale.status === "paid"){
+    p.stock += it.qty;
+    ps.put(p);
+  }
+});
+
         ss.delete(id);
       };
     };
@@ -1253,9 +1258,16 @@ function voidAllByDate(){
         sales.forEach(s=>{
           if(s.dateOnly===d){
             s.items.forEach(it=>{
-              const p=plist.find(x=>x.id===it.productId);
-              if(p){ p.stock+=it.qty; ps.put(p); }
-            });
+  const p = plist.find(x=>x.id===it.productId);
+  if(!p) return;
+
+  // 🔥 RETURN STOCK ONLY IF PAID
+  if(s.status === "paid"){
+    p.stock += it.qty;
+    ps.put(p);
+  }
+});
+
             ss.delete(s.id);
           }
         });
@@ -2105,6 +2117,5 @@ document.addEventListener("click", function unlockAudio(){
 
   document.removeEventListener("click", unlockAudio);
 },{ once:true });
-
 
 
