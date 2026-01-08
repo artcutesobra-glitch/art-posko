@@ -3954,3 +3954,19 @@ body.dark .eod-header{
   }
 }
 
+.paid-btn{
+  background:#28a745;
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  font-weight:700;
+  font-size:12px;
+  border-radius:6px;
+  cursor:pointer;
+  width:100%;
+}
+
+.paid-btn:active{
+  transform:scale(.97);
+}
+
