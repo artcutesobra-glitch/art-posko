@@ -428,15 +428,19 @@ function cancelOrder(){
   showConfirm("Cancel current order?", ()=>{
 
     // 🔥 RETURN STOCK ONLY IF NORMAL ORDER
-    if(!isResumedUnpaid){
-      cart.forEach(i=>{
-        const p = products.find(x=>x.id===i.id);
-        if(p){
-          p.stock += i.qty;
-          saveProductDB(p);
-        }
-      });
+    cart.forEach(i=>{
+  const base = unpaidBaseQty[i.id] || 0;
+  const added = i.qty - base;
+
+  if(added > 0){
+    const p = products.find(x=>x.id===i.id);
+    if(p){
+      p.stock += added;
+      saveProductDB(p);
     }
+  }
+});
+
 
     resetOrder();
 
@@ -454,16 +458,19 @@ function cancelOrder(){
 
 function closeCheckout(){
 
-  // 🔥 ONLY RETURN STOCK IF NOT RESUMED UNPAID
-  if(!isResumedUnpaid){
-    cart.forEach(i=>{
+  // 🔥 RETURN ONLY ADDED ITEMS (SAFE FOR RESUMED UNPAID)
+  cart.forEach(i=>{
+    const base = unpaidBaseQty[i.id] || 0;
+    const added = i.qty - base;
+
+    if(added > 0){
       const p = products.find(x=>x.id===i.id);
       if(p){
-        p.stock += i.qty;
+        p.stock += added;
         saveProductDB(p);
       }
-    });
-  }
+    }
+  });
 
   resetOrder();
 
@@ -475,6 +482,7 @@ function closeCheckout(){
   loadProducts();
   closeModal();
 }
+
 
 
 
@@ -500,6 +508,11 @@ function resumeUnpaidOrder(sale){
   resetOrder();
   unpaidBaseQty = {};
   isResumedUnpaid = true;
+  // 🔒 INIT BASE QTY MAP
+products.forEach(p=>{
+  unpaidBaseQty[p.id] = 0;
+});
+
 
   sale.items.forEach(i=>{
     const p = products.find(x=>x.id===i.productId);
@@ -521,6 +534,9 @@ function resumeUnpaidOrder(sale){
   resumedUnpaidSale = sale;
 
   renderCart();
+  // 🔄 FORCE MENU REFRESH AFTER RESUME
+  products.forEach(p => saveProductDB(p));
+  
   renderMenu();
 
   showAlert(`🧾 Resumed UNPAID order\n👤 ${sale.customerName || "No name"}`);
@@ -596,44 +612,300 @@ req.onsuccess=e=>{
 ===================================================== */
 function openProductModal(){
   if(currentRole!=="admin") return;
+
   renderProductList();
-  productModal.style.display="flex";
+  document.getElementById("productPage").classList.remove("hidden");
+  document.body.classList.add("modal-open");
 }
+
 
 function closeProductModal(){
   productModal.style.display="none";
   clearProductForm();
 }
 
-function renderProductList(){
-  productList.innerHTML="";
-  products.forEach(p=>{
-    const img=p.image?URL.createObjectURL(p.image):"https://via.placeholder.com/80";
-    productList.innerHTML+=`
-      <div class="product-item">
-        <img src="${img}" onload="URL.revokeObjectURL(this.src)">
+function closeProductPage(){
 
-        <div style="flex:1;cursor:pointer" onclick="editProduct(${p.id})">
+  // close inventory page
+  document.getElementById("productPage").classList.add("hidden");
+  document.body.classList.remove("modal-open");
+  clearProductForm();
+
+  // 🔄 HARD REFRESH APP STATE
+  loadProducts();     // reload products from IndexedDB
+  loadSales();        // refresh summaries if needed
+  resetOrder();       // clear any temp cart state
+}
+
+
+function renderProductList(){
+  productList.innerHTML = "";
+
+  products.forEach(p=>{
+    let cls = "inventory-item";
+    if(p.stock <= 0) cls += " out";
+    else if(p.stock <= 5) cls += " low";
+
+    productList.innerHTML += `
+      <div class="${cls}">
+        
+        <div class="inv-info" onclick="editProduct(${p.id})">
           <b>${p.name}</b><br>
-          ₱${p.price}<br>
-          Stock: ${p.stock}
+          <small>₱${p.price}</small>
         </div>
-        <button onclick="deleteProduct(${p.id})">✖</button>
-      </div>`;
+
+        <div class="inv-stock">
+          <button class="stock-btn minus"
+            onpointerdown="startHold(${p.id}, -1)"
+            onpointerup="stopHold()"
+            onpointerleave="stopHold()"
+            onclick="quickStock(${p.id}, -1)">
+            −
+          </button>
+
+          <span class="stock-val"
+            onclick="editStockValue(${p.id}, this)">
+            ${p.stock}
+          </span>
+
+          <button class="stock-btn plus"
+            onpointerdown="startHold(${p.id}, 1)"
+            onpointerup="stopHold()"
+            onpointerleave="stopHold()"
+            onclick="quickStock(${p.id}, 1)">
+            +
+          </button>
+        </div>
+
+      </div>
+    `;
   });
 }
 
+/* ✏️ DIRECT EDIT STOCK VALUE */
+function editStockValue(id, el){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+
+  const input = document.createElement("input");
+  input.type = "number";
+  input.min = "0";
+  input.value = p.stock;
+  input.className = "stock-edit-input";
+
+  el.replaceWith(input);
+  input.focus();
+  input.select();
+
+  function save(){
+    let val = parseInt(input.value);
+    if(isNaN(val) || val < 0) val = p.stock;
+
+    p.stock = val;
+    saveProductDB(p);
+    renderProductList();
+  }
+
+  input.addEventListener("blur", save);
+  input.addEventListener("keydown", e=>{
+    if(e.key === "Enter") input.blur();
+    if(e.key === "Escape") renderProductList();
+  });
+}
+
+function quickStock(id, delta){
+  const p = products.find(x => x.id === id);
+  if(!p) return;
+
+  // prevent negative stock
+  if(p.stock + delta < 0) return;
+
+  p.stock += delta;
+  saveProductDB(p);
+
+  renderProductList();
+}
+
+/* =====================================================
+   🧾 INVENTORY EXPORT
+===================================================== */
+function exportInventory(type="csv"){
+  if(!products.length){
+    showAlert("❌ No inventory to export");
+    return;
+  }
+
+  const date = getTodayPH();
+
+  const rows = products.map(p=>({
+    name: p.name,
+    stock: p.stock || 0,
+    selling_price: p.price || 0,
+    retail_price: p.retail || 0,
+    inventory_value: (p.stock||0)*(p.retail||0)
+  }));
+
+  // JSON
+  if(type==="json"){
+    const payload = {
+      type:"POS_INVENTORY_EXPORT",
+      date,
+      device:getDeviceId(),
+      items:rows
+    };
+
+    downloadBlob(
+      new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),
+      `inventory-${date}.json`
+    );
+    showAlert("✅ Inventory exported (JSON)");
+    return;
+  }
+
+  // CSV
+  const csv =
+`Product Name,Stock,Selling Price,Retail Price,Inventory Value
+${rows.map(r=>`"${r.name}",${r.stock},${r.selling_price},${r.retail_price},${r.inventory_value}`).join("\n")}`;
+
+  downloadBlob(new Blob([csv],{type:"text/csv"}),`inventory-${date}.csv`);
+  showAlert("✅ Inventory exported (CSV)");
+}
+
+
+function downloadBlob(blob, filename){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+/* =====================================================
+   📥 INVENTORY IMPORT
+===================================================== */
+document
+  .getElementById("importInventoryInput")
+  .addEventListener("change", e=>{
+
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = ev=>{
+      let data;
+
+      try{
+        data = JSON.parse(ev.target.result);
+      }catch{
+        showAlert("❌ Invalid inventory file");
+        return;
+      }
+
+      if(
+        data.type !== "POS_INVENTORY_EXPORT" ||
+        !Array.isArray(data.items)
+      ){
+        showAlert("❌ Invalid inventory format");
+        return;
+      }
+
+      askPin("🔐 Confirm ADMIN PIN", pin=>{
+        if(!verifyPin(pin)){
+          showAlert("❌ WRONG PIN");
+          return;
+        }
+
+        data.items.forEach(item=>{
+          const existing = products.find(
+            p => p.name.trim().toLowerCase() ===
+                 item.name.trim().toLowerCase()
+          );
+
+          const prod = {
+            id: existing?.id || Date.now()+Math.random(),
+            name: item.name,
+            stock: +item.stock || 0,
+            price: +item.selling_price || 0,
+            retail: +item.retail_price || 0,
+            commission: existing?.commission || 0,
+            image: existing?.image || null
+          };
+
+          saveProductDB(prod);
+        });
+
+        loadProducts();
+        renderProductList();
+        showAlert("✅ Inventory imported successfully");
+      });
+    };
+
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+
+/* =====================================================
+   INVENTORY PAGE HELPERS
+===================================================== */
+
+// 🔍 SEARCH (Inventory Feel)
+function filterInventory(q){
+  q = q.toLowerCase();
+
+  document
+    .querySelectorAll(".inventory-item")
+    .forEach(item=>{
+      item.style.display =
+        item.textContent.toLowerCase().includes(q)
+          ? "flex"
+          : "none";
+    });
+}
+
+// ➕ NEW PRODUCT BUTTON
+function newProduct(){
+  clearProductForm();
+  editingId = null;
+  openProductEditor();
+}
+
+
+/* =====================================================
+   INVENTORY HEADER DROPDOWN
+===================================================== */
+function toggleInventoryHeaderMenu(){
+  const menu = document.getElementById("inventoryHeaderMenu");
+  if(!menu) return;
+
+  menu.style.display =
+    menu.style.display === "block" ? "none" : "block";
+}
+
+// auto close pag click sa labas
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".inv-title-wrap")){
+    const menu = document.getElementById("inventoryHeaderMenu");
+    if(menu) menu.style.display = "none";
+  }
+});
+
+
 function editProduct(id){
-  const p=products.find(x=>x.id===id);
+  const p = products.find(x=>x.id===id);
   if(!p) return;
 
   editingId = id;
+
   pname.value   = p.name;
   pprice.value  = p.price;
-  pretail.value = p.retail || 0; // 🔥 RETAIL PRICE
+  pretail.value = p.retail || 0;
   pcomm.value   = p.commission || 0;
   pstock.value  = p.stock;
+
+  openProductEditor();
 }
+
 
 
 function saveProduct(){
@@ -683,6 +955,20 @@ function clearProductForm(){
   pimg.value = "";
 }
 
+/* =====================================================
+   PRODUCT EDITOR MODAL (OPEN / CLOSE)
+===================================================== */
+
+function openProductEditor(){
+  document.getElementById("productEditorModal").style.display = "flex";
+  document.body.classList.add("modal-open");
+}
+
+function closeProductEditor(){
+  document.getElementById("productEditorModal").style.display = "none";
+  document.body.classList.remove("modal-open");
+  clearProductForm();
+}
 
 /* =====================================================
    PRODUCTS
@@ -1047,51 +1333,51 @@ todaySalesList
     entry.className = "sales-entry";
 
     entry.innerHTML = `
-  <div>
-    <b>
-      #${orderNo} — ${s.date}
+  <div class="sales-swipe">
+
+    <div class="sales-main">
+      <b>
+        #${orderNo} — ${s.date}
+        ${
+          s.status === "unpaid"
+            ? `<span style="color:#ff5252;font-weight:900">
+                (UNPAID – ${s.customerName || "No name"})
+              </span>`
+            : ""
+        }
+      </b>
+
+      <div class="sales-items">
+        ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
+      </div>
+    </div>
+
+    <div class="sales-actions">
+      <b>₱${s.total.toFixed(2)}</b><br>
+
       ${
         s.status === "unpaid"
-? `<span style="color:#ff5252;font-weight:900">
-    (UNPAID – ${s.customerName || "No name"})
-  </span>`
-: ''
-
+          ? `
+            <button
+              class="paid-btn"
+              onclick="resumeUnpaidOrderById(${s.id})">
+              ➕ ADD
+            </button>
+          `
+          : ""
       }
-    </b>
 
-    <div class="sales-items">
-      ${s.items.map(i => `${i.name} x${i.qty}`).join(", ")}
+      <button
+        class="void-btn"
+        onclick="voidTransaction(${s.id})"
+        data-admin>
+        VOID
+      </button>
     </div>
-  </div>
 
-  <div>
-    <b>₱${s.total.toFixed(2)}</b><br>
-
-    ${
-  s.status === "unpaid"
-  ? `
-    <button
-      class="paid-btn"
-      onclick="resumeUnpaidOrderById(${s.id})">
-      ➕ ADD
-    </button>
-
-    
-  `
-  : ""
-}
-
-
-    <!-- 🔒 ADMIN ONLY -->
-    <button
-      class="void-btn"
-      onclick="voidTransaction(${s.id})"
-      data-admin>
-      VOID
-    </button>
   </div>
 `;
+
 
 
 
@@ -1349,7 +1635,9 @@ function addToCart(id){
     return;
   }
 
-  p.stock--;
+  if(p.stock <= 0) return;
+p.stock--;
+
 
   const i = cart.find(x => x.id === id);
   i ? i.qty++ : cart.push({id:p.id,name:p.name,price:p.price,qty:1});
@@ -1410,13 +1698,13 @@ function chg(id, d){
   if(d < 0){
 
   // 🔒 BLOCK BELOW UNPAID BASE QTY
-  if(
-    isResumedUnpaid &&
-    i.qty <= unpaidBaseQty[i.id]
-  ){
-    showAlert("❌ Cannot reduce below unpaid quantity");
-    return;
-  }
+  const base = unpaidBaseQty[i.id] || 0;
+
+if(isResumedUnpaid && i.qty <= base){
+  showAlert("❌ Cannot reduce below unpaid quantity");
+  return;
+}
+
 
   i.qty--;
   p.stock++;
@@ -1579,80 +1867,81 @@ function checkout(){
 
 function finalizeCheckout(status = "paid"){
 
-  // 🔒 PREVENT DOUBLE TAP
   if(checkoutLocked) return;
   checkoutLocked = true;
 
-  try {
+  const unlock = () => checkoutLocked = false;
 
-    const t = +total.textContent;
-    const c = +cash;
+  const t = +total.textContent;
+  const c = +cash;
 
-    // 💰 CASH CHECK (PAID ONLY)
-    if(status === "paid" && c < t){
-      showAlert("❌ Insufficient cash");
+  // ❌ NO ITEMS
+  if(cart.length === 0){
+    showAlert("❌ No items", unlock);
+    return;
+  }
+
+  // ❌ CASH CHECK
+  if(status === "paid" && c < t){
+    showAlert("❌ Insufficient cash", unlock);
+    return;
+  }
+
+  // ❌ UNPAID NAME REQUIRED
+  let customerName = "";
+  if(status === "unpaid"){
+    const input = document.getElementById("customerNameInput");
+    customerName = input?.value.trim() || "";
+
+    if(!customerName){
+      showAlert("❌ Customer name required for UNPAID", unlock);
       return;
     }
-
-    // 🧾 CUSTOMER NAME (UNPAID ONLY)
-    let customerName = "";
-    if(status === "unpaid"){
-      const input = document.getElementById("customerNameInput");
-      customerName = input?.value.trim() || "";
-
-      if(!customerName){
-        showAlert("❌ Customer name required for UNPAID");
-        return;
-      }
-    }
-
-    // 🔒 AUTO EXIT ADMIN MODE
-    if(currentRole === "admin"){
-      currentRole = "cashier";
-      updateRoleUI();
-    }
-
-    // 🔥 SAVE UPDATED STOCK
-    products.forEach(p => saveProductDB(p));
-
-    // 🔥 SAVE SALE WITH STATUS + NAME
-    const groupId = resumedUnpaidSale
-      ? resumedUnpaidSale.orderGroupId
-      : null;
-
-    saveSaleFromCart(groupId, status, customerName);
-
-    // ✅ DELETE OLD UNPAID RECORD (ONCE)
-    if(isResumedUnpaid && resumedUnpaidSale){
-      db.transaction("sales","readwrite")
-        .objectStore("sales")
-        .delete(resumedUnpaidSale.id);
-    }
-
-    // 🔥 FINAL RESET (SINGLE SOURCE OF TRUTH)
-    resetOrder();
-
-    lastCompletedOrderGroupId = null;
-    unpaidBaseQty = {};
-    resumedUnpaidSale = null;
-    isResumedUnpaid = false;
-
-    loadProducts();
-    loadSales();
-
-    playSound("success");
-
-    showAlert(
-      status === "paid"
-        ? "✅ PAID ORDER COMPLETED"
-        : "⏳ UNPAID ORDER SAVED"
-    );
-
-  } finally {
-    // 🔓 ALWAYS UNLOCK (EVEN IF ERROR)
-    checkoutLocked = false;
   }
+
+  // 🔒 EXIT ADMIN MODE
+  if(currentRole === "admin"){
+    currentRole = "cashier";
+    updateRoleUI();
+  }
+
+  // 🔥 SAVE STOCK
+  products.forEach(p => saveProductDB(p));
+
+  // 🔥 SAVE SALE
+  const groupId = resumedUnpaidSale
+    ? resumedUnpaidSale.orderGroupId
+    : null;
+
+  saveSaleFromCart(groupId, status, customerName);
+
+  // 🔥 DELETE OLD UNPAID
+  if(isResumedUnpaid && resumedUnpaidSale){
+    db.transaction("sales","readwrite")
+      .objectStore("sales")
+      .delete(resumedUnpaidSale.id);
+  }
+
+  // 🔥 RESET
+  resetOrder();
+  lastCompletedOrderGroupId = null;
+  unpaidBaseQty = {};
+  resumedUnpaidSale = null;
+  isResumedUnpaid = false;
+
+  loadProducts();
+  loadSales();
+
+  playSound("success");
+
+  showAlert(
+    status === "paid"
+      ? "✅ PAID ORDER COMPLETED"
+      : "⏳ UNPAID ORDER SAVED",
+    unlock
+  );
 }
+
 
 
 
@@ -1985,13 +2274,29 @@ document
 
 
 /* =====================================================
-   UI
+   UI (FIXED & SAFE)
 ===================================================== */
-hamburger.onclick=e=>{
+const hamburger = document.getElementById("hamburger");
+const dropdown  = document.getElementById("dropdown");
+
+/* 🍔 Hamburger toggle */
+hamburger.addEventListener("click", e=>{
   e.stopPropagation();
-  dropdown.style.display=dropdown.style.display==="block"?"none":"block";
-};
-document.onclick=()=>dropdown.style.display="none";
+  dropdown.style.display =
+    dropdown.style.display === "block" ? "none" : "block";
+});
+
+/* 🌍 GLOBAL CLICK — close menus only */
+document.addEventListener("click", e=>{
+
+  // close hamburger dropdown
+  if(!e.target.closest("#hamburger") && !e.target.closest("#dropdown")){
+    dropdown.style.display = "none";
+  }
+
+});
+
+
 function toggleDark(){
   const isDark = document.body.classList.toggle("dark");
   localStorage.setItem("pos_darkmode", isDark ? "on" : "off");
@@ -2032,12 +2337,12 @@ if ("serviceWorker" in navigator) {
 
     navigator.serviceWorker.register("/art-posko/service-worker.js");
 
-    document.addEventListener("click", e => {
-      const btn = e.target.closest("button");
-      if (!btn || btn.disabled) return;
-      playSound("tap");
-      haptic(15);
-    });
+    document.addEventListener("pointerdown", e=>{
+  const btn = e.target.closest("button");
+  if(!btn || btn.disabled) return;
+  playSound("tap");
+  haptic(15);
+});
 
   });
 }
@@ -2119,3 +2424,37 @@ document.addEventListener("click", function unlockAudio(){
 },{ once:true });
 
 
+/* ===============================
+   SALES SWIPE GESTURE (MOBILE)
+=============================== */
+let swipeStartX = 0;
+let swipeStartY = 0;
+
+document.addEventListener("touchstart", e=>{
+  const entry = e.target.closest(".sales-entry");
+  if(!entry) return;
+
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+},{ passive:true });
+
+document.addEventListener("touchend", e=>{
+  const entry = e.target.closest(".sales-entry");
+  if(!entry) return;
+
+  const dx = e.changedTouches[0].clientX - swipeStartX;
+  const dy = Math.abs(e.changedTouches[0].clientY - swipeStartY);
+
+  // ignore vertical scroll
+  if(dy > 40) return;
+
+  // swipe right → open
+  if(dx > 60){
+    entry.classList.add("open");
+  }
+
+  // swipe left → close
+  if(dx < -60){
+    entry.classList.remove("open");
+  }
+});
