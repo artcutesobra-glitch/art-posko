@@ -4899,39 +4899,53 @@ body.dark .inv-header-menu.dropdown button:hover{
   }
 }
 /* ===============================
-   SALES SWIPE (MOBILE)
+   SALES HISTORY OFF-CANVAS
 =============================== */
-.sales-entry{
-  overflow:hidden;
-}
-
-.sales-swipe{
-  display:flex;
-  width:100%;
-  transition:transform .25s ease;
-}
-
-/* MAIN CONTENT */
-.sales-main{
-  flex:1 0 100%;
-  padding-right:12px;
-}
-
-/* ACTIONS (HIDDEN BY DEFAULT) */
-.sales-actions{
-  flex:0 0 160px;
-  text-align:right;
-  padding-left:12px;
+#salesHistory{
+  position:fixed;
+  top:0;
+  left:0;
+  width:85%;
+  max-width:360px;
+  height:100vh;
+  background:#fff;
+  z-index:999;
+  transform: translateX(-100%);
+  transition: transform .3s ease;
+  box-shadow: 4px 0 20px rgba(0,0,0,.15);
+  overflow-y:auto;
 }
 
 /* OPEN STATE */
-.sales-entry.open .sales-swipe{
-  transform: translateX(-160px);
+#salesHistory.open{
+  transform: translateX(0);
 }
 
-/* DESKTOP SAFETY */
+/* OVERLAY */
+#salesHistoryOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  z-index:998;
+  display:none;
+}
+
+#salesHistoryOverlay.show{
+  display:block;
+}
+
+/* 🖥 DESKTOP — NORMAL MODE */
 @media (min-width:768px){
-  .sales-swipe{
+  #salesHistory{
+    position:relative;
     transform:none !important;
+    width:100%;
+    max-width:none;
+    height:auto;
+    box-shadow:none;
+  }
+
+  #salesHistoryOverlay{
+    display:none !important;
   }
 }
