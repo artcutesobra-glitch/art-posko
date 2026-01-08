@@ -1,3 +1,5 @@
+
+
 function haptic(ms = 15){
   if ("vibrate" in navigator) {
     navigator.vibrate(ms);
@@ -536,7 +538,7 @@ products.forEach(p=>{
   renderCart();
   // 🔄 FORCE MENU REFRESH AFTER RESUME
   products.forEach(p => saveProductDB(p));
-  
+
   renderMenu();
 
   showAlert(`🧾 Resumed UNPAID order\n👤 ${sale.customerName || "No name"}`);
@@ -2424,63 +2426,3 @@ document.addEventListener("click", function unlockAudio(){
 },{ once:true });
 
 
-/* ===============================
-   SALES HISTORY DRAWER (SWIPE)
-=============================== */
-let shStartX = 0;
-let shStartY = 0;
-
-const salesHistory = document.getElementById("salesHistory");
-const shOverlay = document.getElementById("salesHistoryOverlay");
-
-// OPEN
-function openSalesHistory(){
-  salesHistory.classList.add("open");
-  shOverlay.classList.add("show");
-}
-
-// CLOSE
-function closeSalesHistory(){
-  salesHistory.classList.remove("open");
-  shOverlay.classList.remove("show");
-}
-
-// overlay click = close
-shOverlay.addEventListener("click", closeSalesHistory);
-
-// swipe from LEFT EDGE to OPEN
-document.addEventListener("touchstart", e=>{
-  if(e.touches[0].clientX > 30) return; // 👈 LEFT EDGE ONLY
-  shStartX = e.touches[0].clientX;
-  shStartY = e.touches[0].clientY;
-},{ passive:true });
-
-document.addEventListener("touchend", e=>{
-  const dx = e.changedTouches[0].clientX - shStartX;
-  const dy = Math.abs(e.changedTouches[0].clientY - shStartY);
-
-  if(dy > 40) return;
-
-  // 👉 OPEN
-  if(dx > 80){
-    openSalesHistory();
-  }
-});
-
-// swipe inside panel to CLOSE
-salesHistory.addEventListener("touchstart", e=>{
-  shStartX = e.touches[0].clientX;
-  shStartY = e.touches[0].clientY;
-},{ passive:true });
-
-salesHistory.addEventListener("touchend", e=>{
-  const dx = e.changedTouches[0].clientX - shStartX;
-  const dy = Math.abs(e.changedTouches[0].clientY - shStartY);
-
-  if(dy > 40) return;
-
-  // 👈 CLOSE
-  if(dx < -80){
-    closeSalesHistory();
-  }
-});
