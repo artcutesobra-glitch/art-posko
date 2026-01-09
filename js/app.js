@@ -789,6 +789,7 @@ document
   .addEventListener("change", e=>{
 
     const file = e.target.files[0];
+    e.target.value = ""; // 🔥 RESET FIRST (ANDROID FIX)
     if(!file) return;
 
     const reader = new FileReader();
@@ -1731,6 +1732,8 @@ if(isResumedUnpaid && i.qty <= base){
 function updateRoleUI(){
   const isAdmin = currentRole === "admin";
 
+  
+
   // DROPDOWN BUTTONS
   document
     .querySelectorAll("[data-admin]")
@@ -1813,6 +1816,10 @@ function updateNumpadState(){
 ===================================================== */
 function checkout(){
 
+   // 🔊 SOUND ONLY HERE
+  playSound("click");
+  haptic(20);
+  
   const t = +total.textContent;
 
   if(cart.length === 0){
@@ -2228,7 +2235,6 @@ function importSalesByDate(file){
 
     if(
       data.type !== "POS_SALES_BY_DATE" ||
-      !data.date ||
       !Array.isArray(data.sales)
     ){
       showAlert("❌ Invalid sales format");
@@ -2247,25 +2253,23 @@ function importSalesByDate(file){
       let imported = 0;
 
       data.sales.forEach(s=>{
-        store.get(s.id).onsuccess = e=>{
-          if(!e.target.result){
-            store.add(s);
-            imported++;
-          }
-        };
+        store.add({
+          ...s,
+          id: Date.now() + Math.random() // 🔥 ANDROID SAFE
+        });
+        imported++;
       });
 
       tx.oncomplete = ()=>{
         loadSales();
-        showAlert(
-          `✅ Imported ${imported} sales\n📅 Date: ${data.date}`
-        );
+        showAlert(`✅ Imported ${imported} sales`);
       };
     });
   };
 
   reader.readAsText(file);
 }
+
 document
   .getElementById("importSalesInput")
   .addEventListener("change", e=>{
@@ -2339,12 +2343,7 @@ if ("serviceWorker" in navigator) {
 
     navigator.serviceWorker.register("/art-posko/service-worker.js");
 
-    document.addEventListener("pointerdown", e=>{
-  const btn = e.target.closest("button");
-  if(!btn || btn.disabled) return;
-  playSound("tap");
-  haptic(15);
-});
+   
 
   });
 }
@@ -2424,5 +2423,6 @@ document.addEventListener("click", function unlockAudio(){
 
   document.removeEventListener("click", unlockAudio);
 },{ once:true });
+
 
 
