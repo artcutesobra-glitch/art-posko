@@ -575,6 +575,7 @@ function resetCartOnly(){
   cart = [];
   cash = "0";
 
+
   cartItems.innerHTML = "";
   total.textContent = "0";
   cashEl.textContent = "0";
@@ -637,6 +638,7 @@ req.onsuccess=e=>{
   loadProducts();
   loadSales();
   updateRoleUI(); // 👈
+  restoreDraftCartIfAny(); // 🔥 ITO LANG ANG DINAGDAG
 };
 
 /* =====================================================
@@ -1673,6 +1675,40 @@ function resetOrder(){
   updateNumpadState();
 }
 
+function restoreDraftCartIfAny(){
+  const raw = localStorage.getItem("pos_draft_cart");
+  if(!raw) return;
+
+  let draft;
+  try{
+    draft = JSON.parse(raw);
+  }catch{
+    localStorage.removeItem("pos_draft_cart");
+    return;
+  }
+
+  if(!draft.cart || !draft.cart.length){
+    localStorage.removeItem("pos_draft_cart");
+    return;
+  }
+
+  // 🔥 AUTO ROLLBACK STOCK
+  draft.cart.forEach(i => {
+    const p = products.find(x => x.id === i.id);
+    if(p){
+      p.stock += i.qty;
+      saveProductDB(p);
+    }
+  });
+
+  localStorage.removeItem("pos_draft_cart");
+
+  loadProducts();
+
+  showAlert(
+    "⚠️ Previous order was not completed.\nStock has been restored safely."
+  );
+}
 
 
 
@@ -1778,6 +1814,8 @@ total.textContent = totalAmount.toFixed(2);
 
    computeChange();
   updateNumpadState(); // 🔥 ENABLE / DISABLE NUMPAD
+  validatePaidCash(); // 🔥 HARD FIX
+
 }
 
 
@@ -1866,6 +1904,7 @@ function num(n){
 
   cashEl.textContent = cash;
   computeChange();
+  validatePaidCash(); // 🔥 ADD
 }
 
 
@@ -1876,6 +1915,7 @@ function clearCash(){
   cash = "0";
   cashEl.textContent = 0;
   computeChange();
+  validatePaidCash(); // 🔥 ADD
 }
 
 
@@ -1886,6 +1926,7 @@ function back(){
   if(cash === "") cash = "0";
   cashEl.textContent = cash;
   computeChange();
+  validatePaidCash(); // 🔥 ADD
 }
 
 
@@ -1916,6 +1957,7 @@ function updateNumpadState(){
 function checkout(){
 
   const t = +total.textContent;
+  unpaidStep = 0;
 
   if(cart.length === 0){
     playSound("error");
@@ -1924,49 +1966,99 @@ function checkout(){
   }
 
   openModal(`
-  <div style="text-align:center">
-    <h2>🧾 Checkout</h2>
+    <div style="text-align:center">
+      <h2>🧾 Checkout</h2>
 
-    <p>
-      <b>Total:</b> ₱${t.toFixed(2)}
-    </p>
+      <p><b>Total:</b> ₱${t.toFixed(2)}</p>
 
-    <!-- 🔥 CUSTOMER NAME (UNPAID ONLY) -->
-    <input
-      id="customerNameInput"
-      type="text"
-      placeholder="Customer name (for UNPAID)"
-      style="
-        width:100%;
-        padding:10px;
-        margin:10px 0;
-        font-size:16px;
-      "
-    >
+      <div id="unpaidNameWrap"
+           style="display:none;margin-top:10px">
+        <input
+          id="customerNameInput"
+          type="text"
+          placeholder="Customer name (required)"
+          style="width:100%;padding:10px;font-size:16px"
+          oninput="validateUnpaidName()"
+        >
+      </div>
 
-    <div class="actions" style="gap:10px">
-      <button class="save-btn" onclick="finalizeCheckout('paid')">
-        ✅ PAID
-      </button>
+      <div class="actions" style="gap:10px;margin-top:12px">
+        <button class="save-btn"
+                id="paidBtn"
+                disabled
+                style="opacity:.5"
+                onclick="finalizeCheckout('paid')">
+          ✅ PAID
+        </button>
 
-      <button class="close-btn" onclick="finalizeCheckout('unpaid')">
-        ⏳ UNPAID
-      </button>
+        <button class="close-btn"
+                id="unpaidBtn"
+                onclick="handleUnpaidClick()">
+          ⏳ UNPAID
+        </button>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="close-btn"
+                onclick="closeCheckout()"
+                style="width:100%">
+          ✖ CLOSE
+        </button>
+      </div>
     </div>
+  `);
 
-    <div style="margin-top:12px">
-      <button
-        class="close-btn"
-        onclick="closeCheckout()"
-        style="width:100%">
-        ✖ CLOSE
-      </button>
-    </div>
-  </div>
-`);
-
-
+  // 🔥 initial validation
+  validatePaidCash();
 }
+
+function handleUnpaidClick(){
+
+  const wrap  = document.getElementById("unpaidNameWrap");
+  const input = document.getElementById("customerNameInput");
+  const btn   = document.getElementById("unpaidBtn");
+
+  if(!wrap || !input || !btn) return;
+
+  // STEP 1 — FIRST TAP: SHOW INPUT + DISABLE BUTTON
+  if(unpaidStep === 0){
+    unpaidStep = 1;
+    wrap.style.display = "block";
+    btn.disabled = true;
+    btn.style.opacity = 0.5;
+    input.focus();
+    return;
+  }
+
+  // STEP 2 — BUTTON ENABLED ONLY IF NAME EXISTS
+  finalizeCheckout("unpaid");
+}
+
+function validateUnpaidName(){
+  const input = document.getElementById("customerNameInput");
+  const btn   = document.getElementById("unpaidBtn");
+
+  if(!input || !btn) return;
+
+  const ok = input.value.trim().length > 0;
+
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? 1 : 0.5;
+}
+
+function validatePaidCash(){
+  const btn = document.getElementById("paidBtn");
+  if(!btn) return;
+
+  const c = Number(cash) || 0;
+  const t = Number(totalAmountCache) || 0;
+
+  const ok = c >= t && t > 0;
+
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? 1 : 0.5;
+}
+
 
 
 function finalizeCheckout(status = "paid"){
@@ -1985,11 +2077,12 @@ function finalizeCheckout(status = "paid"){
     return;
   }
 
-  // ❌ CASH CHECK
-  if(status === "paid" && c < t){
-    showAlert("❌ Insufficient cash", unlock);
-    return;
-  }
+  // ❌ CASH CHECK (SAFETY NET LANG)
+if(status === "paid" && c < t){
+  showAlert("❌ Insufficient cash", unlock);
+  return;
+}
+
 
   // ❌ UNPAID NAME REQUIRED
   let customerName = "";
@@ -2383,6 +2476,20 @@ document
 const hamburger = document.getElementById("hamburger");
 const dropdown  = document.getElementById("dropdown");
 
+/* =====================================================
+   ANDROID / KEYBOARD BACK & ESC HANDLER
+===================================================== */
+document.addEventListener("keydown", e=>{
+  if(
+  e.key === "Escape" &&
+  systemModal.style.display === "flex" &&
+  document.getElementById("paidBtn") // means checkout modal
+){
+    closeCheckout(); // 🔒 safe rollback
+  }
+});
+
+
 /* 🍔 Hamburger toggle */
 hamburger.addEventListener("click", e=>{
   e.stopPropagation();
@@ -2399,6 +2506,19 @@ document.addEventListener("click", e=>{
   }
 
 });
+
+/* =====================================================
+   ANDROID HARDWARE BACK HANDLER
+===================================================== */
+window.addEventListener("popstate", ()=>{
+  if(
+    systemModal.style.display === "flex" &&
+    document.getElementById("paidBtn")
+  ){
+    closeCheckout();
+  }
+});
+
 
 
 function toggleDark(){
@@ -2439,7 +2559,8 @@ updateNumpadState();
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
 
-    navigator.serviceWorker.register("/art-posko/service-worker.js");
+    navigator.serviceWorker.register("/art-posko/service-worker.js?v=8");
+
 
     document.addEventListener("pointerdown", e=>{
   const btn = e.target.closest("button");
@@ -2528,4 +2649,33 @@ document.addEventListener("click", function unlockAudio(){
 },{ once:true });
 
 
+
+/* =====================================================
+   🔁 DRAFT CART AUTOSAVE (ANTI-GHOST-STOCK)
+===================================================== */
+function saveDraftIfAny(){
+  if(cart.length > 0){
+    localStorage.setItem(
+      "pos_draft_cart",
+      JSON.stringify({
+        cart,
+        unpaidBaseQty,
+        isResumedUnpaid
+      })
+    );
+  }else{
+    localStorage.removeItem("pos_draft_cart");
+  }
+}
+
+// ANDROID / DESKTOP
+window.addEventListener("beforeunload", saveDraftIfAny);
+
+// 🍎 iOS FIX
+window.addEventListener("pagehide", saveDraftIfAny);
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "hidden"){
+    saveDraftIfAny();
+  }
+});
 
