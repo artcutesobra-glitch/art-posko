@@ -147,6 +147,7 @@ function showConfirm(msg, yes){
     <div class="actions">
       <button class="save-btn" onclick="submitConfirm()">YES</button>
       <button class="close-btn" onclick="closeModal()">NO</button>
+
     </div>
   `);
 }
@@ -490,25 +491,42 @@ function closeCheckout(){
 
 function resumeUnpaidOrderById(id){
 
+  if(resumeLocked) return;
+  resumeLocked = true;
+
   // 🔒 BLOCK IF MAY LAMAN PA ANG CART
   if(cart.length > 0){
+    resumeLocked = false;
     showAlert("❌ Finish or cancel current order first");
     return;
   }
 
-  if(!db) return;
+  if(!db){
+    resumeLocked = false;
+    return;
+  }
 
-  db.transaction("sales")
-    .objectStore("sales")
-    .get(id).onsuccess = e=>{
-      const sale = e.target.result;
-      if(sale){
-        resumeUnpaidOrder(sale);
-      }else{
-        showAlert("❌ Unpaid order not found");
-      }
-    };
+  const tx = db.transaction("sales");
+  const store = tx.objectStore("sales");
+
+  store.get(id).onsuccess = e=>{
+    const sale = e.target.result;
+
+    if(sale){
+      resumeUnpaidOrder(sale);
+    }else{
+      showAlert("❌ Unpaid order not found");
+    }
+
+    resumeLocked = false;
+  };
+
+  store.get(id).onerror = ()=>{
+    resumeLocked = false;
+    showAlert("❌ Failed to load unpaid order");
+  };
 }
+
 
 
 function resumeUnpaidOrder(sale){
@@ -580,6 +598,11 @@ let lastCompletedOrderGroupId = null;
 let resumedUnpaidSale = null;
 let isResumedUnpaid = false;
 let checkoutLocked = false;
+let resumeLocked = false;
+let voidLocked = false;
+let addCartLocked = false;
+
+
 
 const req = indexedDB.open(DB, 7);
 req.onupgradeneeded = e => {
@@ -1473,21 +1496,31 @@ if(db && db.objectStoreNames.contains("expenses")){
 ===================================================== */
 function voidTransaction(id){
   if(currentRole !== "admin") return;
+  if(voidLocked) return;
+
+  voidLocked = true;
 
   const txCheck = db.transaction("sales");
   const store = txCheck.objectStore("sales");
 
   store.get(id).onsuccess = e => {
     const sale = e.target.result;
-    if(!sale) return;
+    if(!sale){
+      voidLocked = false;
+      return;
+    }
 
     // 🔒 BLOCK UNPAID
     if(sale.status === "unpaid"){
+      voidLocked = false;
       showAlert("⛔ Cannot VOID unpaid order");
       return;
     }
 
     showConfirm("Void this transaction?", ()=>{
+
+      // 🔓 UNLOCK ONLY ON CONFIRM
+      voidLocked = false;
 
       backupBeforeVoid("void single transaction");
 
@@ -1506,7 +1539,6 @@ function voidTransaction(id){
             const p = plist.find(x=>x.id===it.productId);
             if(!p) return;
 
-            // ✅ SAFE RETURN (PAID ONLY)
             p.stock += it.qty;
             ps.put(p);
           });
@@ -1515,10 +1547,21 @@ function voidTransaction(id){
         };
       };
 
-      tx.oncomplete = ()=>{ loadProducts(); loadSales(); };
+      tx.oncomplete = ()=>{
+        loadProducts();
+        loadSales();
+      };
     });
+
+    // 🔓 SAFETY UNLOCK IF USER CLOSES MODAL (ESC / OUTSIDE)
+    setTimeout(()=>{
+      if(systemModal.style.display !== "flex"){
+        voidLocked = false;
+      }
+    },300);
   };
 }
+
 
 
 function markSaleAsPaid(saleId){
@@ -1676,23 +1719,34 @@ if(p.stock <= 0){
 
 
 function addToCart(id){
+  if(addCartLocked) return;
+  addCartLocked = true;
+
   const p = products.find(x => x.id === id);
 
   if(!p || p.stock <= 0){
+    addCartLocked = false;
     showAlert("❌ Out of stock");
     return;
   }
 
-  if(p.stock <= 0) return;
-p.stock--;
-
+  p.stock--;
 
   const i = cart.find(x => x.id === id);
-  i ? i.qty++ : cart.push({id:p.id,name:p.name,price:p.price,qty:1});
+  i ? i.qty++ : cart.push({
+    id:p.id,
+    name:p.name,
+    price:p.price,
+    qty:1
+  });
 
   renderCart();
   renderMenu();
+
+  // 🔓 QUICK UNLOCK
+  setTimeout(()=>addCartLocked=false,80);
 }
+
 
 
 
