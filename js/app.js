@@ -489,6 +489,13 @@ function closeCheckout(){
 
 
 function resumeUnpaidOrderById(id){
+
+  // 🔒 BLOCK IF MAY LAMAN PA ANG CART
+  if(cart.length > 0){
+    showAlert("❌ Finish or cancel current order first");
+    return;
+  }
+
   if(!db) return;
 
   db.transaction("sales")
@@ -789,7 +796,6 @@ document
   .addEventListener("change", e=>{
 
     const file = e.target.files[0];
-    e.target.value = ""; // 🔥 RESET FIRST (ANDROID FIX)
     if(!file) return;
 
     const reader = new FileReader();
@@ -1361,10 +1367,12 @@ todaySalesList
   s.status === "unpaid"
   ? `
     <button
-      class="paid-btn"
-      onclick="resumeUnpaidOrderById(${s.id})">
-      ➕ ADD
-    </button>
+  class="paid-btn"
+  onclick="resumeUnpaidOrderById(${s.id})"
+  ${cart.length > 0 ? "disabled" : ""}>
+  ➕ ADD
+</button>
+
 
     
   `
@@ -1373,12 +1381,17 @@ todaySalesList
 
 
     <!-- 🔒 ADMIN ONLY -->
-    <button
-      class="void-btn"
-      onclick="voidTransaction(${s.id})"
-      data-admin>
-      VOID
-    </button>
+    ${
+  s.status === "paid"
+  ? `<button
+        class="void-btn"
+        onclick="voidTransaction(${s.id})"
+        data-admin>
+        VOID
+     </button>`
+  : ""
+}
+
   </div>
 `;
 
@@ -1459,39 +1472,54 @@ if(db && db.objectStoreNames.contains("expenses")){
    VOID (ADMIN ONLY)
 ===================================================== */
 function voidTransaction(id){
-  if(currentRole!=="admin") return;
+  if(currentRole !== "admin") return;
 
-  showConfirm("Void this transaction?", ()=>{
-    backupBeforeVoid("void single transaction"); // 🔐 BACKUP
+  const txCheck = db.transaction("sales");
+  const store = txCheck.objectStore("sales");
 
-    const tx=db.transaction([S,P],"readwrite");
+  store.get(id).onsuccess = e => {
+    const sale = e.target.result;
+    if(!sale) return;
 
-    const ss=tx.objectStore(S), ps=tx.objectStore(P);
+    // 🔒 BLOCK UNPAID
+    if(sale.status === "unpaid"){
+      showAlert("⛔ Cannot VOID unpaid order");
+      return;
+    }
 
-    ss.get(id).onsuccess=e=>{
-      const sale=e.target.result;
-      if(!sale) return;
+    showConfirm("Void this transaction?", ()=>{
 
-      ps.getAll().onsuccess=ev=>{
-        const plist=ev.target.result;
-        sale.items.forEach(it=>{
-  const p = plist.find(x=>x.id===it.productId);
-  if(!p) return;
+      backupBeforeVoid("void single transaction");
 
-  // 🔥 RETURN STOCK ONLY IF PAID
-  if(sale.status === "paid"){
-    p.stock += it.qty;
-    ps.put(p);
-  }
-});
+      const tx = db.transaction([S,P],"readwrite");
+      const ss = tx.objectStore(S);
+      const ps = tx.objectStore(P);
 
-        ss.delete(id);
+      ss.get(id).onsuccess = e=>{
+        const sale = e.target.result;
+        if(!sale) return;
+
+        ps.getAll().onsuccess = ev=>{
+          const plist = ev.target.result;
+
+          sale.items.forEach(it=>{
+            const p = plist.find(x=>x.id===it.productId);
+            if(!p) return;
+
+            // ✅ SAFE RETURN (PAID ONLY)
+            p.stock += it.qty;
+            ps.put(p);
+          });
+
+          ss.delete(id);
+        };
       };
-    };
 
-    tx.oncomplete=()=>{ loadProducts(); loadSales(); };
-  });
+      tx.oncomplete = ()=>{ loadProducts(); loadSales(); };
+    });
+  };
 }
+
 
 function markSaleAsPaid(saleId){
 
@@ -1527,45 +1555,62 @@ function markSaleAsPaid(saleId){
 
 
 function voidAllByDate(){
-  if(currentRole!=="admin") return;
+  if(currentRole !== "admin") return;
 
   const d = getActiveDate();
 
-  showConfirm("Void ALL transactions on this date?", ()=>{
-    backupBeforeVoid("void ALL by date"); // 🔐 BACKUP
+  db.transaction("sales")
+    .objectStore("sales")
+    .getAll().onsuccess = e => {
 
-    const tx=db.transaction([S,P],"readwrite");
+      const list = e.target.result || [];
+      const hasUnpaid = list.some(
+        s => s.dateOnly === d && s.status === "unpaid"
+      );
 
-    const ss=tx.objectStore(S), ps=tx.objectStore(P);
+      // 🔒 BLOCK IF MAY UNPAID
+      if(hasUnpaid){
+        showAlert("⛔ Cannot VOID ALL while there are UNPAID orders");
+        return;
+      }
 
-    ss.getAll().onsuccess=e=>{
-      const sales=e.target.result||[];
+      showConfirm("Void ALL transactions on this date?", ()=>{
 
-      ps.getAll().onsuccess=ev=>{
-        const plist=ev.target.result;
+        backupBeforeVoid("void ALL by date");
 
-        sales.forEach(s=>{
-          if(s.dateOnly===d){
-            s.items.forEach(it=>{
-  const p = plist.find(x=>x.id===it.productId);
-  if(!p) return;
+        const tx = db.transaction([S,P],"readwrite");
+        const ss = tx.objectStore(S);
+        const ps = tx.objectStore(P);
 
-  // 🔥 RETURN STOCK ONLY IF PAID
-  if(s.status === "paid"){
-    p.stock += it.qty;
-    ps.put(p);
-  }
-});
+        ss.getAll().onsuccess = e=>{
+          const sales = e.target.result || [];
 
-            ss.delete(s.id);
-          }
-        });
-      };
+          ps.getAll().onsuccess = ev=>{
+            const plist = ev.target.result;
+
+            sales.forEach(s=>{
+              if(s.dateOnly === d){
+
+                s.items.forEach(it=>{
+                  const p = plist.find(x=>x.id===it.productId);
+                  if(!p) return;
+
+                  // ✅ SAFE (ALL PAID DITO)
+                  p.stock += it.qty;
+                  ps.put(p);
+                });
+
+                ss.delete(s.id);
+              }
+            });
+          };
+        };
+
+        tx.oncomplete = ()=>{ loadProducts(); loadSales(); };
+      });
     };
-
-    tx.oncomplete=()=>{ loadProducts(); loadSales(); };
-  });
 }
+
 
 
 /* =====================================================
@@ -1816,10 +1861,6 @@ function updateNumpadState(){
 ===================================================== */
 function checkout(){
 
-   // 🔊 SOUND ONLY HERE
-  playSound("click");
-  haptic(20);
-  
   const t = +total.textContent;
 
   if(cart.length === 0){
@@ -2235,6 +2276,7 @@ function importSalesByDate(file){
 
     if(
       data.type !== "POS_SALES_BY_DATE" ||
+      !data.date ||
       !Array.isArray(data.sales)
     ){
       showAlert("❌ Invalid sales format");
@@ -2253,23 +2295,25 @@ function importSalesByDate(file){
       let imported = 0;
 
       data.sales.forEach(s=>{
-        store.add({
-          ...s,
-          id: Date.now() + Math.random() // 🔥 ANDROID SAFE
-        });
-        imported++;
+        store.get(s.id).onsuccess = e=>{
+          if(!e.target.result){
+            store.add(s);
+            imported++;
+          }
+        };
       });
 
       tx.oncomplete = ()=>{
         loadSales();
-        showAlert(`✅ Imported ${imported} sales`);
+        showAlert(
+          `✅ Imported ${imported} sales\n📅 Date: ${data.date}`
+        );
       };
     });
   };
 
   reader.readAsText(file);
 }
-
 document
   .getElementById("importSalesInput")
   .addEventListener("change", e=>{
@@ -2343,7 +2387,12 @@ if ("serviceWorker" in navigator) {
 
     navigator.serviceWorker.register("/art-posko/service-worker.js");
 
-   
+    document.addEventListener("pointerdown", e=>{
+  const btn = e.target.closest("button");
+  if(!btn || btn.disabled) return;
+  playSound("tap");
+  haptic(15);
+});
 
   });
 }
