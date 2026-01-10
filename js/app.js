@@ -24,6 +24,25 @@ function formatPHDate(d){
 function getTodayPH(){ return formatPHDate(getPHDate()); }
 function getMonthPH(){ return getTodayPH().slice(0,7); }
 
+// ===============================
+// 🔒 LOCKED INVENTORY TOTAL (STEP 3)
+// ===============================
+function getLockedInventoryTotal(){
+  return products.reduce(
+    (sum, p) => sum + (p.savedStock || 0),
+    0
+  );
+}
+
+function updateInventoryTotal(){
+  const el = document.getElementById("inventoryTotal");
+  if(!el) return;
+
+  el.textContent =
+    "TOTAL PRODUCTS (LOCKED): " + getLockedInventoryTotal();
+}
+
+
 function getActiveDate(){
   return salesDate.value || getTodayPH();
 }
@@ -855,15 +874,19 @@ document
                  item.name.trim().toLowerCase()
           );
 
-          const prod = {
-            id: existing?.id || Date.now()+Math.random(),
-            name: item.name,
-            stock: +item.stock || 0,
-            price: +item.selling_price || 0,
-            retail: +item.retail_price || 0,
-            commission: existing?.commission || 0,
-            image: existing?.image || null
-          };
+          const finalStock = +item.stock || 0;
+
+const prod = {
+  id: existing?.id || Date.now()+Math.random(),
+  name: item.name,
+  stock: finalStock,
+  savedStock: finalStock, // 🔥 ADD THIS
+  price: +item.selling_price || 0,
+  retail: +item.retail_price || 0,
+  commission: existing?.commission || 0,
+  image: existing?.image || null
+};
+
 
           saveProductDB(prod);
         });
@@ -952,15 +975,21 @@ function saveProduct(){
   const file=pimg.files[0];
   const img=file?file:products.find(p=>p.id===editingId)?.image||null;
 
-  saveProductDB({
+  const finalStock = +pstock.value || 0;
+
+saveProductDB({
   id: editingId || Date.now(),
   name: pname.value,
-  price: +pprice.value,        // selling price
-  retail: +pretail.value || 0, // 🔥 RETAIL PRICE (PUHUNAN)
+  price: +pprice.value,
+  retail: +pretail.value || 0,
   commission: +pcomm.value || 0,
-  stock: +pstock.value || 0,
+
+  stock: finalStock,        // editable
+  savedStock: finalStock,   // 🔒 LOCKED BASELINE
+
   image: img
 });
+
 
 
   loadProducts();
@@ -1009,10 +1038,13 @@ function closeProductEditor(){
 ===================================================== */
 function loadProducts(){
   db.transaction(P).objectStore(P).getAll().onsuccess=e=>{
-    products=e.target.result||[];
+    products = e.target.result || [];
     renderMenu();
+    updateInventoryTotal(); // 🔥 DITO
   };
 }
+
+
 function saveProductDB(p){
   db.transaction(P,"readwrite").objectStore(P).put(p);
 }
@@ -1190,7 +1222,6 @@ function getRetailForItem(item){
   return p?.retail || 0;
 }
 
-
 function openEODModal(){
   if(currentRole !== "admin"){
     showAlert("⛔ ADMIN ONLY");
@@ -1199,11 +1230,7 @@ function openEODModal(){
 
   const modal = document.getElementById("eodModal");
   modal.style.display = "block";
-
-  requestAnimationFrame(()=>{
-    modal.style.display = "flex";
-  });
-
+  requestAnimationFrame(()=> modal.style.display = "flex");
   document.body.classList.add("modal-open");
 
   const date = getActiveDate();
@@ -1214,119 +1241,255 @@ function openEODModal(){
   ]).then(([sales, expenses])=>{
 
     let totalSales = 0;
-let cogs = 0;
-let expenseTotal = 0;
-let commissionTotal = 0; // ✅ ADD THIS
-let itemMap = {};
+    let cogs = 0;
+    let expenseTotal = 0;
+    let commissionTotal = 0;
 
+    let itemMap = {};        // SALES BREAKDOWN
+    let auditMap = {};       // STOCK AUDIT
+    let inventoryHTML = "";
+    let inventoryTotal = 0;
+    let salesBreakdownTotal = 0;
 
-let inventoryHTML = "";
-let salesBreakdownTotal = 0;
-let inventoryTotal = 0;
-
-
+    // ===============================
+    // SALES (SOLD)
+    // ===============================
     sales.forEach(s=>{
-  totalSales += s.total;
-  commissionTotal += s.commissionTotal || 0;
+      totalSales += s.total;
+      commissionTotal += s.commissionTotal || 0;
 
-  s.items.forEach(i=>{
-    const retail = getRetailForItem(i);
-    cogs += i.qty * retail;
+      s.items.forEach(i=>{
+        const retail = getRetailForItem(i);
+        cogs += i.qty * retail;
 
-    if(!itemMap[i.name]){
-      itemMap[i.name] = { qty:0, sales:0 };
-    }
+        if(!itemMap[i.name]){
+          itemMap[i.name] = { qty:0, sales:0 };
+        }
+        itemMap[i.name].qty += i.qty;
+        itemMap[i.name].sales += i.qty * i.price;
+        salesBreakdownTotal += i.qty * i.price;
 
-    itemMap[i.name].qty   += i.qty;
-    itemMap[i.name].sales += i.qty * i.price;
+        // 🔥 AUDIT SOLD
+        if(!auditMap[i.name]){
+          auditMap[i.name] = { sold:0, unsold:0 };
+        }
+        auditMap[i.name].sold += i.qty;
+      });
+    });
 
-    // ✅ ADD THIS
-    salesBreakdownTotal += i.qty * i.price;
-  });
-});
-
-
-
-
-
-
-
+    // ===============================
+    // EXPENSES
+    // ===============================
     expenses.forEach(e=> expenseTotal += e.amount);
 
-    const gross = totalSales - cogs;
     const net =
-  totalSales
-  - cogs
-  - commissionTotal
-  - expenseTotal;
+      totalSales
+      - cogs
+      - commissionTotal
+      - expenseTotal;
 
-
+    // ===============================
+    // UNSOLD INVENTORY
+    // ===============================
     products.forEach(p=>{
-  if(p.stock > 0){
-    const value = p.stock * (p.retail || 0);
-    inventoryTotal += value;
+      const unsoldQty = p.stock || 0;
 
-    inventoryHTML += `
-      <div>
-        ${p.name} x${p.stock}
-        <span style="float:right">
-          ₱${value.toFixed(2)}
-        </span>
+      if(unsoldQty > 0){
+        const value = unsoldQty * (p.retail || 0);
+        inventoryTotal += value;
+
+        inventoryHTML += `
+          <div>
+            ${p.name} x${unsoldQty}
+            <span style="float:right">
+              ₱${value.toFixed(2)}
+            </span>
+          </div>
+        `;
+      }
+
+      // 🔥 AUDIT UNSOLD
+      if(!auditMap[p.name]){
+        auditMap[p.name] = { sold:0, unsold:0 };
+      }
+      auditMap[p.name].unsold += unsoldQty;
+    });
+
+    // ===============================
+    // STOCK AUDIT DISPLAY (STEP 4)
+    // ===============================
+    let auditHTML = "";
+    let auditTotalQty = 0;
+
+    for(const name in auditMap){
+      const sold = auditMap[name].sold || 0;
+      const unsold = auditMap[name].unsold || 0;
+      const total = sold + unsold;
+      auditTotalQty += total;
+
+      auditHTML += `
+        <div>
+          ${name}
+          <span style="float:right">
+            ${sold} sold + ${unsold} unsold = <b>${total}</b>
+          </span>
+        </div>
+      `;
+    }
+
+// ===============================
+// 🔍 PER-PRODUCT MISMATCH DETAILS
+// ===============================
+let perProductDiffHTML = "";
+let hasPerProductMismatch = false;
+
+products.forEach(p=>{
+  const expected = p.savedStock || 0;
+
+  const audit = auditMap[p.name] || { sold:0, unsold:0 };
+  const actual = audit.sold + audit.unsold;
+
+  const diff = actual - expected;
+
+  if(diff !== 0){
+    hasPerProductMismatch = true;
+
+    perProductDiffHTML += `
+      <div style="font-weight:700;color:#ff5252">
+        ${diff > 0 ? "🔺 SOBRA" : "🔻 KULANG"} — ${p.name}
+        <br>
+        Expected: ${expected} |
+        Actual: ${actual} |
+        Diff: ${diff > 0 ? "+" : ""}${diff}
       </div>
     `;
   }
 });
 
+if(!hasPerProductMismatch){
+  perProductDiffHTML = `
+    <div style="color:#28a745;font-weight:900">
+      ✅ NO PER-PRODUCT MISMATCH
+    </div>
+  `;
+}
 
+    
+    // ===============================
+// 🔒 TOTAL INVENTORY (LOCKED BASELINE)
+// ===============================
+const totalInventoryProducts = products.reduce(
+  (sum, p) => sum + (p.savedStock || 0),
+  0
+);
+
+// ===============================
+// 🔍 AUDIT vs INVENTORY CHECK
+// ===============================
+const diff = auditTotalQty - totalInventoryProducts;
+
+let auditStatusHTML = "";
+
+if(diff === 0){
+  auditStatusHTML = `
+    <div style="color:#28a745;font-weight:900">
+      ✅ STOCK MATCHED
+    </div>
+  `;
+}else{
+  auditStatusHTML = `
+    <div style="color:#ff5252;font-weight:900">
+      ⚠️ STOCK MISMATCH<br>
+      Inventory Total: ${totalInventoryProducts}<br>
+      Audit Total: ${auditTotalQty}<br>
+      Difference: ${diff > 0 ? "+" : ""}${diff}
+    </div>
+  `;
+}
+
+
+    // ===============================
+    // RENDER EOD
+    // ===============================
     eodDate.innerHTML = `<b>Date:</b> ${date}`;
+
     eodSummary.innerHTML = `
-  <div>Sales: ₱${totalSales.toFixed(2)}</div>
-  <div>COGS: ₱${cogs.toFixed(2)}</div>
-  <div>Commission: ₱${commissionTotal.toFixed(2)}</div>
-  <div>Expenses: ₱${expenseTotal.toFixed(2)}</div>
-  <hr>
-  <b>NET PROFIT: ₱${net.toFixed(2)}</b>
-`;
+      <div>Sales: ₱${totalSales.toFixed(2)}</div>
+      <div>Capital: ₱${cogs.toFixed(2)}</div>
+      <div>Commission: ₱${commissionTotal.toFixed(2)}</div>
+      <div>Expenses: ₱${expenseTotal.toFixed(2)}</div>
+      <hr>
+      <b>NET PROFIT: ₱${net.toFixed(2)}</b>
+    `;
 
     eodItems.innerHTML = `
-  ${
-    Object.keys(itemMap).length
-      ? Object.entries(itemMap).map(([n,v])=>`
-          <div>
-            ${n} x${v.qty}
-            <span style="float:right">
-              ₱${v.sales.toFixed(2)}
-            </span>
-          </div>
-        `).join("")
-      : "<small>No sales</small>"
-  }
-
-  <hr>
-  <div style="font-weight:900">
-    TOTAL SALES:
-    <span style="float:right">
-      ₱${salesBreakdownTotal.toFixed(2)}
-    </span>
-  </div>
-`;
-
-
+      ${
+        Object.keys(itemMap).length
+          ? Object.entries(itemMap).map(([n,v])=>`
+              <div>
+                ${n} x${v.qty}
+                <span style="float:right">
+                  ₱${v.sales.toFixed(2)}
+                </span>
+              </div>
+            `).join("")
+          : "<small>No sales</small>"
+      }
+      <hr>
+      <div style="font-weight:900">
+        TOTAL SALES:
+        <span style="float:right">
+          ₱${salesBreakdownTotal.toFixed(2)}
+        </span>
+      </div>
+    `;
 
     eodInventory.innerHTML = `
-  ${inventoryHTML || "<small>No remaining stock</small>"}
+      ${inventoryHTML || "<small>No remaining stock</small>"}
+      <hr>
+      <div style="font-weight:900">
+        TOTAL INVENTORY VALUE:
+        <span style="float:right">
+          ₱${inventoryTotal.toFixed(2)}
+        </span>
+      </div>
+    `;
+
+   document.getElementById("eodAudit").innerHTML = `
+  ${auditHTML}
 
   <hr>
+
   <div style="font-weight:900">
-    TOTAL INVENTORY VALUE:
+    TOTAL AUDIT QTY:
     <span style="float:right">
-      ₱${inventoryTotal.toFixed(2)}
+      ${auditTotalQty}
     </span>
   </div>
+
+  <div style="font-weight:900">
+    TOTAL INVENTORY (LOCKED):
+    <span style="float:right">
+      ${totalInventoryProducts}
+    </span>
+  </div>
+
+  <hr>
+
+  ${auditStatusHTML}
+
+  <hr>
+
+  <h4 style="margin:8px 0">🔍 PER-PRODUCT CHECK</h4>
+  ${perProductDiffHTML}
 `;
+
+
 
   });
 }
+
+
 
 
 function closeEODModal(){
@@ -1351,6 +1514,16 @@ function renderSales(list){
      TODAY SALES LIST
   =============================== */
   const todaySalesList = list.filter(s => s.dateOnly === d);
+
+// 🔒 DISABLE VOID ALL PAG WALANG SALE
+const voidAllBtn = document.getElementById("voidAllBtn");
+if(voidAllBtn){
+  const hasSales = todaySalesList.length > 0;
+  voidAllBtn.disabled = !hasSales;
+  voidAllBtn.style.opacity = hasSales ? 1 : 0.4;
+}
+
+
 const totalToday = todaySalesList.length;
 
 todaySalesList
@@ -1730,6 +1903,9 @@ card.className = "menu-card";
 
 if(p.stock <= 0){
   card.classList.add("out");
+
+  
+
 }
 
 
