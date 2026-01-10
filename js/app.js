@@ -151,10 +151,23 @@ function showAlert(msg, cb=null){
   `);
 
   document.getElementById("alertOk").onclick = () => {
+
+    // 🔒 close Notice
     closeModal();
+
+    // 🔥 close ONLY product details modal
+    const editor = document.getElementById("productEditorModal");
+    if(editor && editor.style.display === "flex"){
+      editor.style.display = "none";
+    }
+
+    document.body.classList.remove("modal-open");
+
     if(cb) cb();
   };
 }
+
+
 
 
 function showConfirm(msg, yes){
@@ -678,17 +691,17 @@ function closeProductModal(){
 }
 
 function closeProductPage(){
-
-  // close inventory page
   document.getElementById("productPage").classList.add("hidden");
   document.body.classList.remove("modal-open");
+
   clearProductForm();
 
-  // 🔄 HARD REFRESH APP STATE
-  loadProducts();     // reload products from IndexedDB
-  loadSales();        // refresh summaries if needed
-  resetOrder();       // clear any temp cart state
+  loadProducts();
+  renderMenu();   // 🔥 ADD (safety)
+  loadSales();
+  resetOrder();
 }
+
 
 
 function renderProductList(){
@@ -756,7 +769,7 @@ function editStockValue(id, el){
 
     p.stock = val;
     saveProductDB(p);
-    renderProductList();
+    
   }
 
   input.addEventListener("blur", save);
@@ -776,7 +789,7 @@ function quickStock(id, delta){
   p.stock += delta;
   saveProductDB(p);
 
-  renderProductList();
+  
 }
 
 /* =====================================================
@@ -967,45 +980,57 @@ function editProduct(id){
 
 function saveProduct(){
   if(!pname.value || !pprice.value){
-  showAlert("❌ Fill name & price");
-  return;
-}
+    showAlert("❌ Fill name & price");
+    return;
+  }
 
-
-  const file=pimg.files[0];
-  const img=file?file:products.find(p=>p.id===editingId)?.image||null;
-
+  const file = pimg.files[0];
+  const img  = file ? file : products.find(p=>p.id===editingId)?.image || null;
   const finalStock = +pstock.value || 0;
 
-saveProductDB({
-  id: editingId || Date.now(),
-  name: pname.value,
-  price: +pprice.value,
-  retail: +pretail.value || 0,
-  commission: +pcomm.value || 0,
+  const tx = db.transaction(P,"readwrite");
+  const store = tx.objectStore(P);
 
-  stock: finalStock,        // editable
-  savedStock: finalStock,   // 🔒 LOCKED BASELINE
+  store.put({
+    id: editingId || Date.now(),
+    name: pname.value,
+    price: +pprice.value,
+    retail: +pretail.value || 0,
+    commission: +pcomm.value || 0,
+    stock: finalStock,
+    savedStock: finalStock,
+    image: img
+  });
 
-  image: img
-});
+  // 🔥 REFLECT ONLY AFTER DB WRITE
+  tx.oncomplete = () => {
+  loadProducts(() => {
+    clearProductForm();
+    closeProductEditor();
+    showAlert("✅ Product saved");
+  });
+};
 
-
-
-  loadProducts();
-  renderProductList();
-  clearProductForm();
 }
+
 
 function deleteProduct(id){
-  if(currentRole!=="admin") return;
+  if(currentRole !== "admin") return;
 
   showConfirm("Delete this product?", ()=>{
-    db.transaction(P,"readwrite").objectStore(P).delete(id);
-    loadProducts();
-    renderProductList();
+
+    const tx = db.transaction(P,"readwrite");
+    tx.objectStore(P).delete(id);
+
+    tx.oncomplete = () => {
+  loadProducts(() => {
+    showAlert("❌ Product deleted");
+  });
+};
+
   });
 }
+
 
 
 function clearProductForm(){
@@ -1036,13 +1061,23 @@ function closeProductEditor(){
 /* =====================================================
    PRODUCTS
 ===================================================== */
-function loadProducts(){
-  db.transaction(P).objectStore(P).getAll().onsuccess=e=>{
-    products = e.target.result || [];
-    renderMenu();
-    updateInventoryTotal(); // 🔥 DITO
-  };
+function loadProducts(afterLoad = null){
+  db.transaction(P)
+    .objectStore(P)
+    .getAll().onsuccess = e => {
+
+      products = e.target.result || [];
+
+      renderMenu();
+      renderProductList();     // 🔥 DITO LANG
+      updateInventoryTotal();
+
+      if(typeof afterLoad === "function"){
+        afterLoad();
+      }
+    };
 }
+
 
 
 function saveProductDB(p){
@@ -1316,26 +1351,16 @@ function openEODModal(){
     });
 
     // ===============================
-    // STOCK AUDIT DISPLAY (STEP 4)
-    // ===============================
-    let auditHTML = "";
-    let auditTotalQty = 0;
+// STOCK AUDIT (TOTAL ONLY)
+// ===============================
+let auditTotalQty = 0;
 
-    for(const name in auditMap){
-      const sold = auditMap[name].sold || 0;
-      const unsold = auditMap[name].unsold || 0;
-      const total = sold + unsold;
-      auditTotalQty += total;
+for(const name in auditMap){
+  const sold = auditMap[name].sold || 0;
+  const unsold = auditMap[name].unsold || 0;
+  auditTotalQty += sold + unsold;
+}
 
-      auditHTML += `
-        <div>
-          ${name}
-          <span style="float:right">
-            ${sold} sold + ${unsold} unsold = <b>${total}</b>
-          </span>
-        </div>
-      `;
-    }
 
 // ===============================
 // 🔍 PER-PRODUCT MISMATCH DETAILS
@@ -1456,10 +1481,6 @@ if(diff === 0){
     `;
 
    document.getElementById("eodAudit").innerHTML = `
-  ${auditHTML}
-
-  <hr>
-
   <div style="font-weight:900">
     TOTAL AUDIT QTY:
     <span style="float:right">
@@ -1483,6 +1504,7 @@ if(diff === 0){
   <h4 style="margin:8px 0">🔍 PER-PRODUCT CHECK</h4>
   ${perProductDiffHTML}
 `;
+
 
 
 
