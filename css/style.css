@@ -4913,4 +4913,179 @@ body:not(.admin-mode) .sales-summary{
 body:not(.admin-mode) .sales-summary .summary-card{
   width: 100%;
 }
+/* =====================================================
+   🧾 EOD MODAL — RESPONSIVE (PC / TABLET / PHONE)
+===================================================== */
+
+/* OVERLAY */
+#eodModal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+/* MAIN BOX */
+#eodModal .modal-box{
+  background: var(--bg, #fff);
+  color: var(--fg, #000);
+  width: 100%;
+  max-width: 1100px;
+  max-height: 90vh;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.eod-header{
+  padding: 14px 16px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+.eod-header h2{
+  margin: 0;
+  font-size: 22px;
+}
+.eod-date{
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: .7;
+}
+
+/* CONTENT SCROLL */
+.eod-grid{
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* CARDS / SECTIONS */
+.eod-grid section{
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+/* FULL WIDTH SECTIONS */
+.eod-grid section.full{
+  grid-column: span 2;
+}
+
+/* TITLES */
+.eod-grid h3{
+  margin: 0 0 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* TABLE STYLE */
+.eod-table > div{
+  padding: 6px 0;
+  border-bottom: 1px dashed #ccc;
+  font-size: 14px;
+}
+.eod-table > div:last-child{
+  border-bottom: none;
+}
+
+/* FOOTER */
+.eod-footer{
+  padding: 12px;
+  border-top: 1px solid #ddd;
+}
+.eod-footer .close-btn{
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+}
+
+/* ===========================
+   📱 MOBILE (PHONES)
+=========================== */
+@media (max-width: 640px){
+
+  #eodModal .modal-box{
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .eod-header h2{
+    font-size: 18px;
+  }
+
+  .eod-grid{
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .eod-grid section.full{
+    grid-column: span 1;
+  }
+
+  .eod-table > div{
+    font-size: 13px;
+  }
+}
+
+/* ===========================
+   📲 TABLET
+=========================== */
+@media (min-width: 641px) and (max-width: 1024px){
+
+  #eodModal .modal-box{
+    max-width: 900px;
+  }
+
+  .eod-grid{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .eod-grid section.full{
+    grid-column: span 2;
+  }
+}
+
+/* ===========================
+   🖥️ DESKTOP
+=========================== */
+@media (min-width: 1025px){
+
+  #eodModal .modal-box{
+    max-width: 1200px;
+  }
+
+  .eod-grid{
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .eod-grid section.full{
+    grid-column: span 3;
+  }
+}
+
+/* ===========================
+   🌙 DARK MODE SUPPORT
+=========================== */
+body.dark #eodModal .modal-box{
+  background: #1e1e1e;
+  color: #eee;
+}
+body.dark .eod-grid section{
+  background: #2a2a2a;
+}
+body.dark .eod-grid section h3{
+  color: #fff;
+}
+body.dark .eod-table > div{
+  border-color: #444;
+}
 
