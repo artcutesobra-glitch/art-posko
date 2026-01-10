@@ -184,10 +184,15 @@
 
   <!-- ACTION -->
   <div class="sales-actions">
-    <button class="void-btn" onclick="voidAllByDate()" data-admin>
-      VOID ALL
-    </button>
-  </div>
+  <button
+    id="voidAllBtn"
+    class="void-btn"
+    data-admin
+    onclick="voidAllByDate()">
+    VOID ALL
+  </button>
+</div>
+
 
   <!-- SALES ENTRY -->
   <div id="salesHistory"></div>
@@ -243,6 +248,10 @@
     <button class="save-btn" onclick="newProduct()">ADD PRODUCT</button>
   </div>
 
+  <!-- 🔒 LOCKED INVENTORY TOTAL -->
+<div id="inventoryTotal"
+     style="font-weight:900;padding:8px;text-align:right">
+</div>
   <div class="inventory-list" id="productList"></div>
 
 </section>
@@ -371,6 +380,13 @@
         <div class="eod-table" id="eodInventory"></div>
       </section>
 
+
+        <!-- 🔥 STOCK AUDIT -->
+      <section class="full">  
+
+          <h3>📊 STOCK AUDIT</h3>
+          <div class="eod-table" id="eodAudit"></div>
+      </section>
     </div>
 
     <!-- FOOTER -->
