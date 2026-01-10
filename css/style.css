@@ -5088,4 +5088,20 @@ body.dark .eod-grid section h3{
 body.dark .eod-table > div{
   border-color: #444;
 }
+/* SYSTEM MODAL (NOTICE / CONFIRM / PIN) */
+#systemModal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999; /* 🔥 ALWAYS ON TOP */
+}
+
+/* INVENTORY PAGE / PRODUCT PAGE */
+#productPage,
+#productEditorModal,
+#changePinModal,
+#expenseModal,
+#commissionModal,
+#eodModal {
+  z-index: 9000;
+}
 
