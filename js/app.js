@@ -621,6 +621,37 @@ function resetCartOnly(){
 /* =====================================================
    DATABASE
 ===================================================== */
+/* =====================================================
+   🧾 EOD SNAPSHOT (SAFE – ADD ONLY)
+===================================================== */
+function saveEODSnapshotSafe(date, payload){
+  if(!db) return;
+
+  const tx = db.transaction("eod","readwrite");
+  tx.objectStore("eod").put({
+    date,
+    savedAt: new Date().toLocaleString("en-PH"),
+    ...payload
+  });
+}
+
+function getEODSnapshot(date){
+  return new Promise(res=>{
+    if(!db || !db.objectStoreNames.contains("eod")){
+      res(null);
+      return;
+    }
+
+    db.transaction("eod")
+      .objectStore("eod")
+      .get(date).onsuccess = e=>{
+        res(e.target.result || null);
+      };
+  });
+}
+
+
+
 const DB="posDB", P="products", S="sales";
 let db, products=[], cart=[], cash="", editingId=null;
 let unpaidBaseQty = {}; 
@@ -637,7 +668,8 @@ let addCartLocked = false;
 
 
 
-const req = indexedDB.open(DB, 7);
+const req = indexedDB.open(DB, 8);
+
 req.onupgradeneeded = e => {
   const d = e.target.result;
 
@@ -657,6 +689,11 @@ req.onupgradeneeded = e => {
   if(!d.objectStoreNames.contains("expenses")){
     d.createObjectStore("expenses",{ keyPath:"id" });
   }
+
+  if(!d.objectStoreNames.contains("eod")){
+  d.createObjectStore("eod",{ keyPath:"date" });
+  }
+
 
 };
 
@@ -1556,7 +1593,16 @@ if(diff === 0){
   ${perProductDiffHTML}
 `;
 
-
+// ✅ DITO MO ILALAGAY
+    saveEODSnapshotSafe(date,{
+      inventorySnapshot: products.map(p=>({
+        id: p.id,
+        name: p.name,
+        stock: p.stock,
+        retail: p.retail,
+        savedStock: p.savedStock
+      }))
+    });
 
 
   });
