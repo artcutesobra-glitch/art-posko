@@ -239,14 +239,31 @@
 
 
   <div class="inventory-toolbar">
-    <input
-      type="text"
-      placeholder="🔍 Search product..."
-      oninput="filterInventory(this.value)"
-    >
 
-    <button class="save-btn" onclick="newProduct()">ADD PRODUCT</button>
-  </div>
+  <input
+    type="text"
+    placeholder="🔍 Search"
+    oninput="filterInventory(this.value)"
+  >
+
+  <select
+    class="inv-sort"
+    onchange="sortInventory(this.value)"
+    title="Sort Inventory"
+  >
+    <option value="">↕️</option>
+    <option value="az">A–Z</option>
+    <option value="za">Z–A</option>
+    <option value="stockAsc">Stock ↑</option>
+    <option value="stockDesc">Stock ↓</option>
+    <option value="priceAsc">₱ ↑</option>
+    <option value="priceDesc">₱ ↓</option>
+  </select>
+
+  <button class="save-btn" onclick="newProduct()">ADD</button>
+</div>
+
+
 
   <!-- 🔒 LOCKED INVENTORY TOTAL -->
 <div id="inventoryTotal"
