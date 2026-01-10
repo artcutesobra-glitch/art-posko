@@ -918,6 +918,49 @@ const prod = {
 /* =====================================================
    INVENTORY PAGE HELPERS
 ===================================================== */
+  function sortInventory(type){
+  if(!products.length) return;
+
+  switch(type){
+
+    // 🔤 NAME
+    case "az":
+      products.sort((a,b)=>a.name.localeCompare(b.name));
+      break;
+
+    case "za":
+      products.sort((a,b)=>b.name.localeCompare(a.name));
+      break;
+
+    // 📦 STOCK
+    case "stockAsc":
+      products.sort((a,b)=>(a.stock||0)-(b.stock||0));
+      break;
+
+    case "stockDesc":
+      products.sort((a,b)=>(b.stock||0)-(a.stock||0));
+      break;
+
+    // 💰 PRICE
+    case "priceAsc":
+      products.sort((a,b)=>(a.price||0)-(b.price||0));
+      break;
+
+    case "priceDesc":
+      products.sort((a,b)=>(b.price||0)-(a.price||0));
+      break;
+  }
+
+  // 🔥 SAVE AS NEW ORDER
+  products.forEach((p,i)=>{
+    p.sortOrder = i;
+    saveProductDB(p);
+  });
+
+  renderProductList();
+  renderMenu();
+}
+
 
 // 🔍 SEARCH (Inventory Feel)
 function filterInventory(q){
@@ -985,7 +1028,10 @@ function saveProduct(){
   }
 
   const file = pimg.files[0];
-  const img  = file ? file : products.find(p=>p.id===editingId)?.image || null;
+  const img  = file
+    ? file
+    : products.find(p=>p.id===editingId)?.image || null;
+
   const finalStock = +pstock.value || 0;
 
   const tx = db.transaction(P,"readwrite");
@@ -999,19 +1045,22 @@ function saveProduct(){
     commission: +pcomm.value || 0,
     stock: finalStock,
     savedStock: finalStock,
-    image: img
+    image: img,   // ✅ COMMA FIX
+    sortOrder: editingId
+      ? products.find(p=>p.id===editingId)?.sortOrder ?? Date.now()
+      : Date.now()
   });
 
   // 🔥 REFLECT ONLY AFTER DB WRITE
   tx.oncomplete = () => {
-  loadProducts(() => {
-    clearProductForm();
-    closeProductEditor();
-    showAlert("✅ Product saved");
-  });
-};
-
+    loadProducts(() => {
+      clearProductForm();
+      closeProductEditor();
+      showAlert("✅ Product saved");
+    });
+  };
 }
+
 
 
 function deleteProduct(id){
@@ -1066,7 +1115,9 @@ function loadProducts(afterLoad = null){
     .objectStore(P)
     .getAll().onsuccess = e => {
 
-      products = e.target.result || [];
+      products = (e.target.result || [])
+  .sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
+
 
       renderMenu();
       renderProductList();     // 🔥 DITO LANG
