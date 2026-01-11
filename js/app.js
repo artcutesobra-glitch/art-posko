@@ -739,6 +739,46 @@ function closeProductPage(){
   resetOrder();
 }
 
+/* =====================================
+   🔁 STOCK LONG PRESS HANDLER (SAFE)
+===================================== */
+
+let holdTimer = null;
+let holdInterval = null;
+let holdActive = false;
+
+const HOLD_DELAY = 350;   // bago mag auto-repeat
+const HOLD_SPEED = 120;   // bilis ng repeat
+
+function startHold(id, delta){
+  stopHold();
+  holdActive = false;
+
+  holdTimer = setTimeout(()=>{
+    holdActive = true;
+
+    holdInterval = setInterval(()=>{
+      quickStock(id, delta);
+      haptic(5);
+    }, HOLD_SPEED);
+
+  }, HOLD_DELAY);
+}
+
+
+function stopHold(){
+  clearTimeout(holdTimer);
+  clearInterval(holdInterval);
+  holdTimer = null;
+  holdInterval = null;
+  holdActive = false; // ✅ IMPORTANT
+}
+
+function handleStockClick(id, delta){
+  if(holdActive) return; // 🔒 pag long press, walang extra click
+  quickStock(id, delta);
+  haptic(15);
+}
 
 
 function renderProductList(){
@@ -750,7 +790,8 @@ function renderProductList(){
     else if(p.stock <= 5) cls += " low";
 
     productList.innerHTML += `
-      <div class="${cls}">
+      <div class="${cls}" data-id="${p.id}">
+
         
         <div class="inv-info" onclick="editProduct(${p.id})">
           <b>${p.name}</b><br>
@@ -759,12 +800,13 @@ function renderProductList(){
 
         <div class="inv-stock">
           <button class="stock-btn minus"
-            onpointerdown="startHold(${p.id}, -1)"
-            onpointerup="stopHold()"
-            onpointerleave="stopHold()"
-            onclick="quickStock(${p.id}, -1)">
-            −
-          </button>
+  onpointerdown="startHold(${p.id}, -1)"
+  onpointerup="stopHold()"
+  onpointerleave="stopHold()"
+  onpointercancel="stopHold()"
+  onclick="handleStockClick(${p.id}, -1)">
+  −
+</button>
 
           <span class="stock-val"
             onclick="editStockValue(${p.id}, this)">
@@ -772,12 +814,14 @@ function renderProductList(){
           </span>
 
           <button class="stock-btn plus"
-            onpointerdown="startHold(${p.id}, 1)"
-            onpointerup="stopHold()"
-            onpointerleave="stopHold()"
-            onclick="quickStock(${p.id}, 1)">
-            +
-          </button>
+  onpointerdown="startHold(${p.id}, 1)"
+  onpointerup="stopHold()"
+  onpointerleave="stopHold()"
+  onpointercancel="stopHold()"
+  onclick="handleStockClick(${p.id}, 1)">
+  +
+</button>
+
         </div>
 
       </div>
@@ -815,19 +859,27 @@ function editStockValue(id, el){
     if(e.key === "Escape") renderProductList();
   });
 }
-
 function quickStock(id, delta){
   const p = products.find(x => x.id === id);
   if(!p) return;
 
-  // prevent negative stock
   if(p.stock + delta < 0) return;
 
+  // ✅ 1️⃣ UPDATE DATA FIRST
   p.stock += delta;
-  saveProductDB(p);
 
-  
+  // ✅ 2️⃣ UPDATE UI IMMEDIATELY
+  const el = document.querySelector(
+    `.inventory-item[data-id="${id}"] .stock-val`
+  );
+  if(el){
+    el.textContent = p.stock;
+  }
+
+  // ✅ 3️⃣ SAVE TO DB (ASYNC, WALANG HINTAY)
+  saveProductDB(p);
 }
+
 
 /* =====================================================
    🧾 INVENTORY EXPORT
